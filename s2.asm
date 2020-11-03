@@ -4406,10 +4406,10 @@ Level_TtlCard:
 	bsr.w	LoadZoneTiles
 +
 	jsrto	(loadZoneBlockMaps).l, JmpTo_loadZoneBlockMaps
+	jsr	(loc_402D4).l
 	jsrto	(DrawInitialBG).l, JmpTo_DrawInitialBG
 	tst.b	(Level_Quick_Reset_flag).w
 	bne.w	+
-	jsr	(loc_402D4).l
 	jsr	(ConvertCollisionArray).l
 	bsr.w	LoadCollisionIndexes
 	bsr.w	WaterEffects
