@@ -23154,10 +23154,10 @@ Obj_Attracted_Ring_sub_0:
 Obj_Attracted_Ring_sub_2:
 	bsr.w	Obj_Attracted_Ring_Move
 	movea.w	parent(a0),a1
-	btst	#0,status_secondary(a1)	; Change the #0 to #5 if you've ported the actual lightning shield
+	btst	#Status_LtngShield,status_secondary(a1)	; Change the #0 to #5 if you've ported the actual lightning shield
 	bne.s	+
-	_move.l	#Obj_LostRings,id(a0)
-	move.b	#2,routine(a0)
+	_move.l	#Obj_LostRings_Main,id(a0)
+	move.b	#0,routine(a0)
 	move.b	#-1,(Ring_spill_anim_counter).w
 +
 	move.b	(Rings_anim_frame).w,mapping_frame(a0)
