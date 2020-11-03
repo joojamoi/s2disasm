@@ -14079,6 +14079,11 @@ InitCam_EHZ:
 	clr.l	(Camera_BG_X_pos_P2).w
 	clr.l	(Camera_BG_Y_pos_P2).w
 	clr.l	(Camera_BG2_Y_pos_P2).w
+	tst.b	(Current_Act).w
+	beq.s	+
+	move.w	#$2C28,(Camera_BG_X_pos).w
+	move.w	#$2C28,(Camera_BG_X_pos_P2).w
++
 	rts
 ; ===========================================================================
 ; wtf:
@@ -14416,9 +14421,7 @@ SwScrl_EHZ:
 	add.w	d4,d0	; add x-shift for this frame
 	move.w	d0,(Camera_BG_X_pos).w
 	neg.w	d0
-	move.w	d0,d1
-	asr.w	#1,d1
-	sub.w	d1,d0
+	asr.w	#2,d0
 
 	asr.w	#6,d0
 
