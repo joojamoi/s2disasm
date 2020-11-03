@@ -77980,7 +77980,7 @@ ShieldTouch_Loop:
 
 ShieldTouch_NextObj:
 		lea	next_object(a1),a1 ; load obj address ; goto next object
-		dbf	d6,Touch_Loop ; repeat 6F more times
+		dbf	d6,ShieldTouch_Loop ; repeat 6F more times
 		;subq.w	#2,d6				; Count the object as done
 		;bne.s	ShieldTouch_Loop		; If there are still objects left, loop
 
