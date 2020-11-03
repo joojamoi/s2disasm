@@ -317,7 +317,7 @@ OptionsScreen_Input_MenuItemSound:
 	andi.w	#button_B_mask|button_C_mask,d0
 	beq.s	+	; rts
 	move.w	(Sound_test_sound).w,d0
-	move.b	d0,mQueue+1.w
+	musicreg	d0
 	lea	(level_select_cheat).l,a0
 	lea	(continues_cheat).l,a2
 	lea	(Level_select_flag).w,a1	; Also Slow_motion_flag

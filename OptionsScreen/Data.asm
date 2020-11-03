@@ -105,6 +105,11 @@ Txt_ActTransitions:		menutxt "ACT TRANSITIONS    "
 Txt_Instant:			menutxt "            INSTANT"
 
 Txt_Credits:			menutxt "CREDITS            "
+Txt_S2Credits:			menutxt "SONIC 2 CREDITS    "
+Txt_ModCredits:			menutxt "MOD CREDITS        "
+Txt_Music:				menutxt "MUSIC              "
+Txt_SFX:				menutxt "SOUND EFFECTS      "
+Txt_SoundOptions:		menutxt "SOUND OPTIONS      "
 
 ; =============================================================================
 
@@ -234,9 +239,9 @@ OptionsMenu_Main:
 	menuitemdata MenuItemSub,			Txt_GameplayOptions,    OptionsMenu_Gameplay
 	menuitemdata MenuItemSub,			Txt_StyleOptions,       OptionsMenu_Style
 	menuitemdata MenuItemSub,			Txt_SystemOptions,		OptionsMenu_Emulator
-	menuitemdata MenuItemCredits,		Txt_Credits,			0
+	menuitemdata MenuItemSub,			Txt_Credits,			OptionsMenu_Credits
 
-OptionsMenu_Val_Player: 	        menuitemdatavalue	4,          Player_option_byte,     TxtList_CharacterUE
+OptionsMenu_Val_Player: 	        menuitemdatavalue	4,          Player_option,	        TxtList_CharacterUE
 OptionsMenu_Val_2P:			        menuitemdatavalue	1,          Option_2PItems,         TxtList_2PItems
 OptionsMenu_Val_Sound:		        menuitemdatavalue	SFXlast, 	Sound_test_sound_byte,  0
 
@@ -283,11 +288,10 @@ OptionsMenu_Val_TailsFlight:		menuitemdatavalue	2,          Option_TailsFlight, 
 OptionsMenu_Style:
 	dc.w 4 ; max index
 	menuitemdata MenuItemBack,	Txt_Back,                OptionsMenu_Main
-	menuitemdata MenuItemValue, Txt_WaterSoundFilter,    OptionsMenu_Val_WaterSoundFilter
+	menuitemdata MenuItemSub, 	Txt_SoundOptions,        OptionsMenu_Sound
 	menuitemdata MenuItemValue, Txt_WaterRipple,         OptionsMenu_Val_WaterRipple
 	menuitemdata MenuItemValue, Txt_SpeedTrail,          OptionsMenu_Val_SpeedTrail
 	menuitemdata MenuItemValue, Txt_CameraStyle,         OptionsMenu_Val_CameraStyle
-	menuitemdata MenuItemValue, Txt_SuperMusic,          OptionsMenu_Val_SuperMusic
 
 OptionsMenu_Val_WaterSoundFilter:   menuitemdatavalue	1,          Option_WaterSoundFilter,		TxtList_OffOn
 OptionsMenu_Val_WaterRipple:        menuitemdatavalue	2,          Option_WaterRipple,		        TxtList_WaterRipple
@@ -316,6 +320,27 @@ OptionsMenu_Emulator:
 
 OptionsMenu_Val_Emulator_Scaling:   	menuitemdatavalue	2,          Option_Emulator_Scaling,		TxtList_Scaling
 OptionsMenu_Val_Emulator_MirrorMode:	menuitemdatavalue	1,          Option_Emulator_MirrorMode,		TxtList_OffOn
+
+; =============================================================================
+
+OptionsMenu_Credits:
+	dc.w 2 ; max index
+	menuitemdata MenuItemBack,		Txt_Back,               OptionsMenu_Main
+	menuitemdata MenuItemCredits,	Txt_S2Credits,			0
+	menuitemdata MenuItemCredits,	Txt_ModCredits,			0
+
+; =============================================================================
+
+OptionsMenu_Sound:
+	dc.w 4 ; max index
+	menuitemdata MenuItemBack,		Txt_Back,               OptionsMenu_Style
+	menuitemdata MenuItemValue, 	Txt_Music,			    OptionsMenu_Val_Music
+	menuitemdata MenuItemValue, 	Txt_SFX,			    OptionsMenu_Val_SFX
+	menuitemdata MenuItemValue, 	Txt_WaterSoundFilter,   OptionsMenu_Val_WaterSoundFilter
+	menuitemdata MenuItemValue, 	Txt_SuperMusic,         OptionsMenu_Val_SuperMusic
+
+OptionsMenu_Val_Music:   	menuitemdatavalue	1,          Option_Music,		TxtList_OnOff
+OptionsMenu_Val_SFX:	   	menuitemdatavalue	1,          Option_SFX,			TxtList_OnOff
 
 ; =============================================================================
 

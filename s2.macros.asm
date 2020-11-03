@@ -240,13 +240,37 @@ command		macro id
 
 ; Macro for playing music
 music		macro id
-	move.b #id,mQueue+1.w
-    endm
+		move.b #id,mQueue+1.w
+		tst.b	(Option_Music).w
+		beq.s	.cont
+		move.b #Mus_Stop,mQueue+1.w
+	.cont:
+	    endm
+
+musicreg		macro reg
+		move.b reg,mQueue+1.w
+		tst.b	(Option_Music).w
+		beq.s	.cont
+		move.b #Mus_Stop,mQueue+1.w
+	.cont:
+	    endm
 
 ; Macro for playing sound effect
+sfxreg		macro reg
+		move.b reg,mQueue+2.w
+		tst.b	(Option_SFX).w
+		beq.s	.cont
+		move.b #Mus_StopSFX,mQueue+2.w
+	.cont:
+		endm
+
 sfx		macro id
-	move.b #id,mQueue+2.w
-    endm
+		move.b #id,mQueue+2.w
+		tst.b	(Option_SFX).w
+		beq.s	.cont
+		move.b #Mus_StopSFX,mQueue+2.w
+	.cont:
+		endm
 
 ; ---------------------------------------------------------------------------
 ; long conditional jumps

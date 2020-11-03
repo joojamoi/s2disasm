@@ -1347,9 +1347,8 @@ SlotMachine_Slot3Rout:		ds.b 1 ; unused?
 
 Player_MainChar:		ds.b 1
 Player_PartnerChar:		ds.b 1
-Player_mode:			ds.w 1		; 0 = Sonic and Tails, 1 = Sonic, 2 = Tails
-Player_option:			ds.b 1		; 0 = Sonic and Tails, 1 = Sonic, 2 = Tails
-Player_option_byte:			ds.b 1		; 0 = Sonic and Tails, 1 = Sonic, 2 = Tails
+Player_mode:			ds.b 1		; 0 = Sonic and Tails, 1 = Sonic, 2 = Tails
+						ds.b 1 ; align
 
 HomingAttack_Object:	ds.l 1
 
@@ -1431,7 +1430,10 @@ Option_SuperMusic:		ds.b 1 ; 0 = on
 Option_InvincShields:	ds.b 1
 
 Option_ActTransitions:	ds.b 1
-						ds.b 1
+Player_option:			ds.b 1		; 0 = Sonic and Tails, 1 = Sonic, 2 = Tails
+
+Option_Music:			ds.b 1		; 0 = on, 1 = off
+Option_SFX:				ds.b 1		; 0 = on, 1 = off
 
 Option_Emulator_Scaling:	ds.b 1
 Option_Emulator_MirrorMode:	ds.b 1

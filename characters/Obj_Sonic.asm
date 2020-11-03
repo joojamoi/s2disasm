@@ -151,7 +151,7 @@ Obj_Sonic_ChkInvin:		; Checks if invincibility has expired and disables it if it
 	cmpi.b	#$C,air_left(a0)	; Don't change music if drowning
 	blo.s	Obj_Sonic_RmvInvin
 	move.w	(Level_Music).w,d0
-	move.b	d0,mQueue+1.w
+	musicreg	d0
 ;loc_1A106:
 Obj_Sonic_RmvInvin:
 	bclr	#status_sec_isInvincible,status_secondary(a0)

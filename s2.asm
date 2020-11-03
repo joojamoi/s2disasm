@@ -4101,7 +4101,7 @@ PlayStageMusic:
 	lea_	MusicList,a1
 	move.b	(a1,d0.w),d0		; load from music playlist
 	move.w	d0,(Level_Music).w	; store level music
-	move.b	d0,mQueue+1.w
+	musicreg	d0
 	command	Mus_Reset
 	rts
 
@@ -4361,7 +4361,7 @@ Level_GetBgm:
 Level_PlayBgm:
 	move.b	(a1,d0.w),d0		; load from music playlist
 	move.w	d0,(Level_Music).w	; store level music
-	move.b	d0,mQueue+1.w
+	musicreg	d0
 	command	Mus_Reset
 	rts
 
@@ -4752,11 +4752,11 @@ Level_SetPlayerMode:
 	beq.s	+			; if yes, branch
 	tst.w	(Two_player_mode).w	; 2P mode?
 	bne.s	+			; if yes, branch
-	move.w	(Player_option).w,(Player_mode).w ; use the option chosen in the Options screen
+	move.b	(Player_option).w,(Player_mode).w ; use the option chosen in the Options screen
 	bra.s   Level_SetPlayerDetails
 ; ---------------------------------------------------------------------------
 +	
-	move.w	#0,(Player_mode).w	; force Sonic and Tails
+	move.b	#0,(Player_mode).w	; force Sonic and Tails
 
 Level_SetPlayerDetails:
 	move.b	(Player_mode+1).w,(Player_MainChar).w
@@ -4764,17 +4764,17 @@ Level_SetPlayerDetails:
 ;	lsl.w	#1,d0
 	;move.b	d0,
 
-	cmpi.w  #1,(Player_mode).w
+	cmpi.b  #1,(Player_mode).w
 	beq.s	+
-	cmpi.w  #2,(Player_mode).w
+	cmpi.b  #2,(Player_mode).w
 	beq.s	+
-	cmpi.w  #3,(Player_mode).w
+	cmpi.b  #3,(Player_mode).w
 	beq.s	+
 
 	move.b  #1,(Player_MainChar).w
 	move.b  #2,(Player_PartnerChar).w
 
-	cmpi.w  #4,(Player_mode).w
+	cmpi.b  #4,(Player_mode).w
 	bne.s	+
 	move.b  #3,(Player_MainChar).w
 
@@ -6166,10 +6166,10 @@ SpecialStage:
 	move.l	#0,(Camera_X_pos_copy).w
 	move.l	#0,(Camera_Y_pos_copy).w
 
-	cmpi.w	#1,(Player_mode).w	; is this a Tails alone game?
+	cmpi.b	#1,(Player_mode).w	; is this a Tails alone game?
 	bgt.s	+			; if yes, branch
 	move.l	#Obj_SonicSS,(MainCharacter+id).w ; load Obj_SonicSS (special stage Sonic)
-	tst.w	(Player_mode).w		; is this a Sonic and Tails game?
+	tst.b	(Player_mode).w		; is this a Sonic and Tails game?
 	bne.s	++			; if not, branch
 +	move.l	#Obj_TailsSS,(Sidekick+id).w ; load Obj_TailsSS (special stage Tails)
 
@@ -9013,7 +9013,7 @@ Obj_SSHUD:
 	addq.w	#1,d1
 	bra.s	++
 ; ---------------------------------------------------------------------------
-+	move.w	(Player_mode).w,d1
++	move.b	(Player_mode).w,d1
 	andi.w	#3,d1
 	tst.b	(Graphics_Flags).w
 	bpl.s	+
@@ -9354,7 +9354,7 @@ loc_7480:
 	lea	sub2_x_pos(a0),a1
 	movea.l	a1,a2
 	addq.w	#5,a2	; a2 = sub2_mapframe(a0)
-	cmpi.w	#2,(Player_mode).w
+	cmpi.b	#2,(Player_mode).w
 	beq.s	loc_74EA
 	move.b	(MainCharacter+ss_rings_hundreds).w,d0
 	beq.s	+
@@ -9375,14 +9375,14 @@ loc_7480:
 	move.w	d3,d4
 	subq.w	#1,d4
 	move.w	#$48,d1
-	tst.w	(Player_mode).w
+	tst.b	(Player_mode).w
 	beq.s	+
 	addi.w	#$54,d1
 /	move.w	d1,(a1,d5.w)
 	addi_.w	#8,d1
 	addq.w	#next_subspr,d5
 	dbf	d4,-
-	cmpi.w	#1,(Player_mode).w
+	cmpi.b	#1,(Player_mode).w
 	beq.s	loc_7536
 
 loc_74EA:
@@ -9407,7 +9407,7 @@ loc_74EA:
 	add.w	d4,d3
 	subq.w	#1,d4
 	move.w	#$E0,d1
-	tst.w	(Player_mode).w
+	tst.b	(Player_mode).w
 	beq.s	+
 	subi.w	#$44,d1
 /	move.w	d1,(a1,d5.w)
@@ -10220,7 +10220,7 @@ TwoPlayerResults:
 	cmp.w	(Level_Music).w,d0
 	beq.s	+
 	move.w	d0,(Level_Music).w
-	move.b	d0,mQueue+1.w
+	musicreg	d0
 
 +
 	move.w	#(30*60)-1,(Demo_Time_left).w	; 30 seconds
@@ -11184,7 +11184,7 @@ MenuScreen:
 	move.w	(VDP_Reg1_val).w,d0
 	andi.b	#$BF,d0
 	move.w	d0,(VDP_control_port).l
-	bsr.w	ClearScreen
+	jsr		ClearScreen
 	lea	(VDP_control_port).l,a6
 	move.w	#$8004,(a6)		; H-INT disabled
 	move.w	#$8200|(VRAM_Menu_Plane_A_Name_Table/$400),(a6)		; PNT A base: $C000
@@ -11256,7 +11256,7 @@ MenuScreen:
 	bsr.w	ClearOld2PLevSelSelection
 	addq.b	#1,(Current_Zone_2P).w
 	andi.b	#3,(Current_Zone_2P).w
-	clr.w	(Player_mode).w
+	clr.b	(Player_mode).w
 	clr.b	(Current_Act_2P).w
 	clr.w	(Results_Screen_2P).w	; VsRSID_Act
 	clr.b	(Level_started_flag).w
@@ -11546,7 +11546,7 @@ MenuScreen_LevelSelect:
 
 	bsr.w	LevelSelect_DrawIcon
 
-	clr.w	(Player_mode).w
+	clr.b	(Player_mode).w
 	clr.w	(Results_Screen_2P).w	; VsRSID_Act
 	clr.b	(Level_started_flag).w
 	clr.w	(Anim_Counters).w
@@ -11638,7 +11638,7 @@ LevelSelect_PressStart:
 	move.l	d0,(Score_2P).w
 	move.l	#5000,(Next_Extra_life_score).w
 	move.l	#5000,(Next_Extra_life_score_2P).w
-	move.w	(Player_option).w,(Player_mode).w
+	move.b	(Player_option).w,(Player_mode).w
 	jsr		Level_SetPlayerDetails
 	rts
 ; ===========================================================================
@@ -11784,7 +11784,7 @@ LevSelControls_CheckLR:
 	move.w	d0,(Sound_test_sound).w
     andi.w    #button_C_mask,d1
 	beq.s	+	; rts
-	move.b	Sound_test_sound+1.w,mQueue+1.w
+	musicreg	Sound_test_sound+1.w
 	lea	(debug_cheat).l,a0
 	lea	(super_sonic_cheat).l,a2
 	lea	(Debug_options_flag).w,a1	; Also S1_hidden_credits_flag
@@ -11805,10 +11805,10 @@ LevSelControls_SwitchSide:	; not in soundtest, not up/down pressed
 +;LevSelControls_SwitchPlayerOption:
     btst    #button_C,(Ctrl_1_Press).w    ; is C pressed?
     beq.s    +                ; if not, branch
-    addq.w    #1,(Player_option).w        ; select next character
-    cmpi.w    #4,(Player_option).w        ; did we go over the limit?
+    addi.b    #1,(Player_option).w        ; select next character
+    cmpi.b    #4,(Player_option).w        ; did we go over the limit?
     bls.s    +                ; if not, branch
-    clr.w    (Player_option).w        ; reset to 0
+    clr.b    (Player_option).w        ; reset to 0
 +
 	rts
 ; ===========================================================================
@@ -12133,7 +12133,7 @@ EndingSequence:
 	clr.b	(Super_Sonic_flag).w
 	cmpi.b	#7,(Emerald_count).w
 	bne.s	+
-	cmpi.w	#2,(Player_mode).w
+	cmpi.b	#2,(Player_mode).w
 	beq.s	+
 	st	(Super_Sonic_flag).w
 	move.b	#-1,(Super_Sonic_palette).w
@@ -12141,7 +12141,7 @@ EndingSequence:
 	move.w	#$30,(Palette_frame).w
 +
 	moveq	#0,d0
-	cmpi.w	#2,(Player_mode).w
+	cmpi.b	#2,(Player_mode).w
 	beq.s	+
 	tst.b	(Super_Sonic_flag).w
 	bne.s	++
@@ -12664,7 +12664,7 @@ Obj_EndingTrigger_Index:	offsetTable
 Obj_EndingTrigger_Init:
 	lea	(Obj_Tornado_SubObjData).l,a1
 	jsrto	(LoadSubObject_Part3).l, JmpTo_LoadSubObject_Part3
-	cmpi.w	#2,(Player_mode).w
+	cmpi.b	#2,(Player_mode).w
 	bne.s	+
 	move.b	#4,mapping_frame(a0)
 	move.b	#1,anim(a0)
@@ -14291,7 +14291,7 @@ DeformBgLayer:
 	lea	(Camera_Min_X_pos).w,a2
 	lea	(Camera_Y_pos_diff).w,a4
 	move.w	(Camera_Y_pos_bias).w,d3
-	cmpi.b	#2,(Player_mode).w
+	cmpi.l	#Obj_Tails,(MainCharacter+id).w
 	bne.s	+
 	move.w	(Camera_Y_pos_bias_P2).w,d3
 +
@@ -18683,7 +18683,7 @@ LevEvents_HTZ_Routine2:
 	cmpi.w	#$1E00,(Camera_X_pos).w
 	blo.s	.keep_shaking
 	move.b	#0,(Screen_Shaking_Flag).w
-	bra.s	LevEvents_HTZ_Routine2_Continue
+	bra.w	LevEvents_HTZ_Routine2_Continue
 ; ---------------------------------------------------------------------------
 .keep_shaking:
 	tst.b	(HTZ_Terrain_Direction).w
@@ -18923,7 +18923,7 @@ LevEvents_HTZ2_Routine2:
 	cmpi.w	#$1A00,(Camera_X_pos).w
 	blo.s	.keep_shaking
 	move.b	#0,(Screen_Shaking_Flag).w
-	bra.s	LevEvents_HTZ2_Routine2_Continue
+	bra.w	LevEvents_HTZ2_Routine2_Continue
 ; ---------------------------------------------------------------------------
 .keep_shaking:
 	tst.b	(HTZ_Terrain_Direction).w
@@ -19030,7 +19030,7 @@ LevEvents_HTZ2_Routine4:
 	cmpi.w	#$15F0,(Camera_X_pos).w
 	blo.w	LevEvents_HTZ2_Routine4_Continue
 	cmpi.w	#$1AC0,(Camera_X_pos).w
-	bhs.s	LevEvents_HTZ2_Routine4_Continue
+	bhs.w	LevEvents_HTZ2_Routine4_Continue
 	tst.b	(HTZ_Terrain_Direction).w
 	bne.s	.sinking
 	cmpi.w	#$300,(Camera_BG_Y_offset).w
@@ -19779,7 +19779,7 @@ LevEvents_SCZ2:
 ; loc_F626:
 PlayLevelMusic:
 	move.w	(Level_Music).w,d0
-	move.b	d0,mQueue+1.w
+	musicreg	d0
 	rts
 ; ===========================================================================
 
@@ -21673,7 +21673,7 @@ Obj_HPZCollapsingPlatform_CreateFragments:
 	movea.l	a0,a1
 	bra.s	+
 ; ===========================================================================
--	bsr.w	SingleObjLoad
+-	jsr		SingleObjLoad
 	bne.s	+++
 	addq.w	#8,a3
 +
@@ -22919,7 +22919,11 @@ CollectRing_1P:
 	moveq	#mus_ExtraLife,d0	; prepare to play the extra life jingle
 
 JmpTo_PlaySoundStereo ; JmpTo
-	move.b	d0,mQueue+1.w
+	move.b d0,mQueue+1.w
+	tst.b	(Option_SFX).w
+	beq.s	.cont
+	move.b #Mus_StopSFX,mQueue+1.w
+  .cont:
 	rts
 ; ===========================================================================
 
@@ -22952,7 +22956,7 @@ CollectRing_Tails:
 	moveq	#mus_ExtraLife,d0		; prepare to play the extra life jingle
 
 JmpTo2_PlaySoundStereo ; JmpTo
-	move.b	d0,mQueue+1.w
+	musicreg	d0
 	rts
 ; End of function CollectRing
 
@@ -23953,7 +23957,7 @@ super_shoes:
 	lea	(MainCharacter).w,a0	; Load main character to a0
 	cmpa.w	a0,a1			; Did the main character break the monitor?
 	bne.s	super_shoes_Tails		; If not, branch
-	cmpi.w	#2,(Player_mode).w	; Is player using Tails?
+	cmpi.b	#2,(Player_mode).w	; Is player using Tails?
 	beq.s	super_shoes_Tails		; If yes, branch
 	lea	(Sonic_top_speed).w,a2	; Load Sonic_top_speed into a2
 	jsr	ApplySpeedSettings	; Fetch Speed settings
@@ -25964,7 +25968,7 @@ loc_140CE:
 
 loc_14102:
 	moveq	#0,d0
-	cmpi.w	#2,(Player_mode).w
+	cmpi.b	#2,(Player_mode).w
 	bne.s	loc_14118
 	addq.w	#1,d0
 	btst	#7,(Graphics_Flags).w
@@ -26468,7 +26472,7 @@ Obj_SSResults_Emerald0:
 ; ===========================================================================
 ;loc_144DC
 Obj_SSResults_P2Rings:
-	tst.w	(Player_mode).w
+	tst.b	(Player_mode).w
 	bne.w	DeleteObject
 	cmpi.b	#$26,(SpecialStageResults+routine).w	; Do we need space for perfect countdown?
 	beq.w	DeleteObject							; Branch if yes
@@ -26493,7 +26497,7 @@ Obj_SSResults_P1Rings:
 	bra.w	Obj_SSResults_PerfectBonus
 ; ===========================================================================
 +
-	move.w	(Player_mode).w,d0
+	move.b	(Player_mode).w,d0
 	beq.s	++
 	move.w	#$120,y_pixel(a0)
 	subq.w	#1,d0
@@ -26613,7 +26617,7 @@ Obj_SSResults_TallyPerfect:
 	sfx	sfx_Register
 	addq.b	#4,routine(a0)
 	move.b	#$78,anim_frame_duration(a0)
-	cmpi.w	#2,(Player_mode).w
+	cmpi.b	#2,(Player_mode).w
 	beq.s	+		; rts
 	tst.b	(Got_Emerald).w
 	beq.s	+		; rts
@@ -27236,7 +27240,7 @@ loc_15758:
 -	movem.l	d4-d6,-(sp)
 	moveq	#-$30,d5
 	move.w	d4,d1
-	bsr.w	CalcBlockVRAMPos
+	jsr		CalcBlockVRAMPos
 	move.w	d1,d4
 	moveq	#-$30,d5
 	moveq	#$1F,d6
@@ -32486,7 +32490,7 @@ Obj_Signpost_Main:
 	sub.w	x_pos(a0),d0
 	bcs.w	loc_192D6
 	cmpi.w	#$20,d0
-	bhs.s	loc_192D6
+	bhs.w	loc_192D6
 	sfx	sfx_Signpost	; play spinning sound
 	clr.b	(Update_HUD_timer).w
 	move.w	(Camera_Max_X_pos).w,(Camera_Min_X_pos).w	; lock screen
@@ -32505,13 +32509,13 @@ Obj_Signpost_Main:
 	cmpi.b	#$C,(Loser_Time_Left).w
 	bhi.s	loc_192A0
 	move.w	(Level_Music).w,d0
-	move.b	d0,mQueue+1.w
+	musicreg	d0
 
 loc_192A0:
 	tst.b	Obj_Signpost_finalanim(a0)
 	bne.w	loc_19350
 	move.b	#3,Obj_Signpost_finalanim(a0)
-	cmpi.w	#2,(Player_mode).w
+	cmpi.b	#2,(Player_mode).w
 	bne.s	loc_192BC
 	move.b	#4,Obj_Signpost_finalanim(a0)
 
@@ -32520,7 +32524,7 @@ loc_192BC:
 	beq.w	loc_19350
 	move.w	#$3C3C,(Loser_Time_Left).w
 	sfx	sfx_SignPost2P
-	bra.s	loc_19350
+	bra.w	loc_19350
 ; ---------------------------------------------------------------------------
 
 loc_192D6:
@@ -32528,9 +32532,9 @@ loc_192D6:
 
 Obj_Signpost_Hit:
 	tst.w	(Two_player_mode).w
-	beq.s	loc_19350
+	beq.w	loc_19350
 	tst.b	(Update_HUD_timer_2P).w
-	beq.s	loc_19350
+	beq.w	loc_19350
 	lea	(Sidekick).w,a1 ; a1=character
 	move.w	x_pos(a1),d0
 	sub.w	x_pos(a0),d0
@@ -32546,7 +32550,7 @@ Obj_Signpost_Hit:
 	cmpi.b	#$C,(Loser_Time_Left).w
 	bhi.s	loc_1932E
 	move.w	(Level_Music).w,d0
-	move.b	d0,mQueue+1.w
+	musicreg	d0
 
 loc_1932E:
 	tst.b	Obj_Signpost_finalanim(a0)
@@ -32670,7 +32674,7 @@ Load_EndOfAct:
 	move.l	#Obj_Results,id(a1) ; load Obj_Results (end of level results screen)
 +
 	moveq	#PLCID_Results,d0
-	cmpi.w	#2,(Player_mode).w
+	cmpi.b	#2,(Player_mode).w
 	bne.s	+
 	moveq	#PLCID_ResultsTails,d0
 +
@@ -33634,7 +33638,7 @@ loc_19E30:
 	move.w	a0,d1
 	subi.w	#Object_RAM,d1
 	bne.s	loc_19E76
-	cmpi.w	#2,(Player_mode).w
+	cmpi.b	#2,(Player_mode).w
 	beq.s	loc_19E76
 
 	jsr	(Sonic_ResetOnFloor_Part2).l
@@ -34336,7 +34340,7 @@ ResumeMusic:
 	moveq	#mus_Boss,d0		; prepare to play boss music
 
 +
-	move.b	d0,mQueue+1.w		; play it!
+	musicreg	d0		; play it!
 
 ; return_1D858:
 ResumeMusic_Done:
@@ -34555,7 +34559,7 @@ loc_1DA80:
 	movea.w	parent(a0),a1 ; a1=character
 	btst	#status_sec_isInvincible,status_secondary(a1)
 	jeq		DeleteObject
-	cmpi.w	#2,(Player_mode).w
+	cmpi.b	#2,(Player_mode).w
 	beq.s	loc_1DAA4
 	lea	(Sonic_Pos_Record_Index).w,a5
 	lea	(Sonic_Pos_Record_Buf).w,a6
@@ -34694,7 +34698,7 @@ Obj_Splash_Init:
 	cmpa.w	#Sonic_Dust,a0
 	beq.s	+
 	move.b	#1,objoff_34(a0)
-	cmpi.w	#2,(Player_mode).w
+	cmpi.b	#2,(Player_mode).w
 	beq.s	+
 	move.w	#make_art_tile(ArtTile_ArtNem_TailsDust,0,0),art_tile(a0)
 	move.w	#Sidekick,parent(a0)
@@ -42354,7 +42358,7 @@ loc_23CA0:
 	lea	(MainCharacter).w,a1 ; a1=character
 	move.w	x_pos(a1),d0
 	cmp.w	d2,d0
-	blo.s	+	; rts
+	blo.w	+	; rts
 	cmp.w	d3,d0
 	bhs.s	+	; rts
 	lea	(Sidekick).w,a2 ; a2=character
@@ -49604,7 +49608,7 @@ loc_29B5E:
 	cmpi.w	#$18,d1
 	bhs.w	return_29BF8
 	tst.b	obj_control(a1)
-	bmi.s	return_29BF8
+	bmi.w	return_29BF8
 	cmpi.b	#4,routine(a1)
 	bhs.s	return_29BF8
 	tst.w	(Debug_placement_mode).w
@@ -57762,7 +57766,7 @@ Obj_ARZBoss_Init:
 	rts
 ; ---------------------------------------------------------------------------
 +
-	tst.w	(Player_mode).w			; is player mode anything other than Sonic & Tails?
+	tst.b	(Player_mode).w			; is player mode anything other than Sonic & Tails?
 	bne.s	Obj_ARZBoss_Init_RaisePillars		; if yes, branch
 	move.w	(MainCharacter+x_pos).w,d0
 	cmpi.w	#$2A60-40,d0			; is Sonic too close to the left edge?
@@ -61253,7 +61257,7 @@ Obj_OOZBoss_LaserShooter_Aim:
 ; loc_3333C:
 Obj_OOZBoss_LaserShooter_Aim_MovingUp:
 	cmp.w	(Boss_Y_pos).w,d0	; has laser shooter reached its destination?
-	blo.s	Obj_OOZBoss_LaserShooter_End	; if not, branch
+	blo.w	Obj_OOZBoss_LaserShooter_End	; if not, branch
 
 ; loc_33342:
 Obj_OOZBoss_LaserShooter_Fire:
@@ -61920,7 +61924,7 @@ SSPlayer_Jump:
 	move.b	d0,collision_property(a0)
 	tst.b	(SS_2p_Flag).w
 	bne.s	loc_33B9E
-	tst.w	(Player_mode).w
+	tst.b	(Player_mode).w
 	bne.s	loc_33BA2
 
 loc_33B9E:
@@ -62174,7 +62178,7 @@ return_33E42:
 ; ===========================================================================
 
 SSPlayerSwapPositions:
-	tst.w	(Player_mode).w
+	tst.b	(Player_mode).w
 	bne.s	return_33E8E
 	move.w	ss_z_pos(a0),d0
 	cmpa.w	#MainCharacter,a0
@@ -62617,7 +62621,7 @@ Obj_TailsSS_Init:
 	move.b	#4,render_flags(a0)
 	move.w	#prio(2),priority(a0)
 	move.w	#$80,ss_z_pos(a0)
-	tst.w	(Player_mode).w
+	tst.b	(Player_mode).w
 	beq.s	loc_34864
 	move.w	#prio(3),priority(a0)
 	move.w	#$6E,ss_z_pos(a0)
@@ -62661,7 +62665,7 @@ Obj_TailsSS_MdNormal:
 	bne.s	Obj_TailsSS_Hurt
 	bsr.w	SSTailsCPU_Control
 	lea	(Ctrl_2_Held_Logical).w,a2
-	tst.w	(Player_mode).w
+	tst.b	(Player_mode).w
 	beq.s	+
 	lea	(Ctrl_1_Held_Logical).w,a2
 +
@@ -62672,7 +62676,7 @@ Obj_TailsSS_MdNormal:
 	bsr.w	SSObjectMove
 	bsr.w	SSAnglePos
 	lea	(Ctrl_2_Press_Logical).w,a2
-	tst.w	(Player_mode).w
+	tst.b	(Player_mode).w
 	beq.s	+
 	lea	(Ctrl_1_Press_Logical).w,a2
 +
@@ -62695,7 +62699,7 @@ Obj_TailsSS_Hurt:
 SSTailsCPU_Control:
 	tst.b	(SS_2p_Flag).w
 	bne.s	+
-	tst.w	(Player_mode).w
+	tst.b	(Player_mode).w
 	beq.s	++
 +
 	rts
@@ -62752,7 +62756,7 @@ LoadSSTailsDynPLC:
 
 Obj_TailsSS_MdJump:
 	lea	(Ctrl_2_Held_Logical).w,a2
-	tst.w	(Player_mode).w
+	tst.b	(Player_mode).w
 	beq.s	+
 	lea	(Ctrl_1_Held_Logical).w,a2
 +
@@ -62769,7 +62773,7 @@ Obj_TailsSS_MdJump:
 
 Obj_TailsSS_MdAir:
 	lea	(Ctrl_2_Held_Logical).w,a2
-	tst.w	(Player_mode).w
+	tst.b	(Player_mode).w
 	beq.s	+
 	lea	(Ctrl_1_Held_Logical).w,a2
 +
@@ -63806,7 +63810,7 @@ Obj_SSMessage_RingsNeeded:
 ; ===========================================================================
 +
 	move.w	(Ring_count).w,d0
-	cmpi.w	#1,(Player_mode).w
+	cmpi.b	#1,(Player_mode).w
 	blt.s	+
 	beq.s	++
 	move.w	(Ring_count_2P).w,d0
@@ -64061,7 +64065,7 @@ loc_35978:
 	move.w	#4,d1
 	moveq	#sfx_StarPost,d0
 +
-	move.b	d0,mQueue+2.w
+	sfxreg	d0
 	move.w	d1,d0
 	bsr.w	Obj_SSMessage_PrintCheckpointMessage
 	bra.w	JmpTo63_DeleteObject
@@ -70056,7 +70060,7 @@ loc_39BA4:
 	move.w	#$1000,(Camera_Max_X_pos).w
 	addq.b	#2,(Dynamic_Resize_Routine).w
 	move.w	(Level_Music).w,d0
-	move.b	d0,mQueue+1.w
+	musicreg	d0
 	bra.w	JmpTo65_DeleteObject
 ; ===========================================================================
 
@@ -70968,7 +70972,7 @@ Obj_Tornado_Init:
 	move.b	subtype(a0),d0
 	subi.b	#$4E,d0
 	move.b	d0,routine(a0)
-	cmpi.w	#2,(Player_mode).w
+	cmpi.b	#2,(Player_mode).w
 	bne.s	+
 	cmpi.b	#8,d0
 	bhs.s	+
@@ -71266,7 +71270,7 @@ loc_3AB18:
 	move.l	#(1<<24)|(0<<16)|(AniIDSonAni_Wait<<8)|AniIDSonAni_Wait,mapping_frame(a1)
 	move.b	#1,anim_frame_duration(a1)
 	move.b	#$13,y_radius(a1)
-	cmpi.w	#2,(Player_mode).w
+	cmpi.b	#2,(Player_mode).w
 	bne.s	+
 	move.b	#$F,y_radius(a1)
 + ; loc_3AB60:
@@ -71406,7 +71410,7 @@ loc_3AC7E:
 
 loc_3AC84:
 	tst.b	collision_property(a0)
-	beq.s	return_3ACF0
+	beq.w	return_3ACF0
 	addq.b	#2,routine_secondary(a0)
 	clr.b	collision_flags(a0)
 	move.w	#(224/2)+8,(Camera_Y_pos_bias).w
@@ -71725,7 +71729,7 @@ Obj_Tornado_Animate_Pilot:
 	moveq	#0,d0
 	move.b	objoff_36(a0),d0
 	moveq	#Tails_pilot_frames_end-Tails_pilot_frames,d1
-	cmpi.w	#2,(Player_mode).w
+	cmpi.b	#2,(Player_mode).w
 	bne.s	+
 	moveq	#Sonic_pilot_frames_end-Sonic_pilot_frames,d1
 + ; loc_3AF78:
@@ -71735,7 +71739,7 @@ Obj_Tornado_Animate_Pilot:
 	moveq	#0,d0
 + ; loc_3AF80:
 	move.b	d0,objoff_36(a0)
-	cmpi.w	#2,(Player_mode).w
+	cmpi.b	#2,(Player_mode).w
 	bne.s	+
 	move.b	Sonic_pilot_frames(pc,d0.w),d0
 	jmpto	(LoadSonicDynPLC_Part2).l, JmpTo_LoadSonicDynPLC_Part2
@@ -73139,7 +73143,7 @@ Obj_BreakablePlating_Main:
 +
 	move.b	(Ctrl_1_Press_Logical).w,d0
 	andi.w	#button_B_mask|button_C_mask|button_A_mask,d0
-	beq.s	BranchTo16_JmpTo39_MarkObjGone
+	beq.w	BranchTo16_JmpTo39_MarkObjGone
 
 loc_3C12E:
 	clr.b	collision_flags(a0)
@@ -76181,7 +76185,7 @@ loc_3E252:
 	bne.s	return_3E23C
 	move.b	anim_frame(a0),d1
 	addq.b	#1,d1
-	move.b	(a1,d1.w),mQueue+2.w
+	sfxreg	(a1,d1.w)
 	addq.b	#1,d1
 	move.b	d1,anim_frame(a0)
 	move.b	(a1,d1.w),d0
@@ -77830,7 +77834,7 @@ Hurt_ChkSpikes:
 
 ; loc_3F91C:
 Hurt_Sound:
-	move.b	d0,mQueue+2.w
+	sfxreg	d0
 	moveq	#-1,d0
 	rts
 ; ===========================================================================
@@ -77859,7 +77863,7 @@ KillCharacter:
 	bne.s	+
 	moveq	#sfx_SpikeHit,d0
 +
-	move.b	d0,mQueue+2.w
+	sfxreg	d0
 +
 	moveq	#-1,d0
 	rts

@@ -39,7 +39,7 @@ Obj_Tails_Init:
 	move.b	#$84,render_flags(a0) ; render_flags(Tails) = $80 | initial render_flags(Sonic)
 	lea		(Tails_top_speed).w,a2	; Load Tails_top_speed into a2
 	jsr		ApplySpeedSettings	; Fetch Speed settings
-	cmpi.w	#2,(Player_mode).w
+	cmpi.b	#2,(Player_mode).w
 	bne.s	Obj_Tails_Init_2Pmode
 	tst.b	(Last_star_pole_hit).w
 	bne.s	Obj_Tails_Init_Continued
@@ -180,7 +180,7 @@ Obj_Tails_ChkInvinc:	; Checks if invincibility has expired and disables it if it
 	cmpi.b	#$C,air_left(a0)	; Don't change music if drowning
 	blo.s	Obj_Tails_RmvInvin
 	move.w	(Level_Music).w,d0
-	move.b	d0,mQueue+1.w
+	musicreg	d0
 ; loc_1BA96:
 Obj_Tails_RmvInvin:
 	bclr	#status_sec_isInvincible,status_secondary(a0)
@@ -1121,7 +1121,7 @@ loc_14892:
 
 Tails_Set_Flying_Animation:
 		btst	#6,status(a0)
-		bne.s	Tails_FlyAnim_Underwater
+		bne.w	Tails_FlyAnim_Underwater
 
 Tails_FlyAnim_Tired:
 		cmpi.b	#1,double_jump_property(a0) ; Is tails tired?
@@ -2004,7 +2004,7 @@ Tails_Test_For_Flight_2P:
 		move.b	(Ctrl_2_Press_Logical).w,d0
 		andi.b	#button_A_mask|button_B_mask|button_C_mask,d0
 		beq.w	Tails_Test_For_Flight_Assist
-		cmpi.w	#2,(Player_mode).w
+		cmpi.b	#2,(Player_mode).w
 		beq.s	Tails_DoFly
 		tst.w	(Tails_control_counter).w
 		bne.s	Tails_DoFly
@@ -2104,7 +2104,7 @@ return_1C75C:
 Tails_UpdateSpindash:
 	move.b	(Ctrl_2_Held_Logical).w,d0
 	btst	#button_down,d0
-	bne.s	Tails_ChargingSpindash
+	bne.w	Tails_ChargingSpindash
 
 	; unleash the charged spindash and start rolling quickly:
 	move.b	#$E,y_radius(a0)
@@ -2634,7 +2634,7 @@ Obj_Tails_Dead:
 
 ; loc_1CC6C:
 Obj_Tails_CheckGameOver:
-	cmpi.w	#2,(Player_mode).w	; is it a Tails Alone game?
+	cmpi.b	#2,(Player_mode).w	; is it a Tails Alone game?
 	beq.w	CheckGameOver		; if yes, branch... goodness, code reuse
 	move.b	#1,(Scroll_lock_P2).w
 	move.b	#0,spindash_flag(a0)
