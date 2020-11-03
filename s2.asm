@@ -4275,10 +4275,10 @@ Level_VDPInit:
 	move.w	#$8C81,(a6)		; H res 40 cells, no interlace
 	;tst.b	(Debug_options_flag).w
 	;beq.s	++
-	btst	#button_C,(Ctrl_1_Held).w
-	beq.s	+
-	move.w	#$8C89,(a6)	; H res 40 cells, no interlace, S/H enabled
-+
+	;btst	#button_C,(Ctrl_1_Held).w
+	;beq.s	+
+	;move.w	#$8C89,(a6)	; H res 40 cells, no interlace, S/H enabled
+;+
 	btst	#button_A,(Ctrl_1_Held).w
 	beq.s	+
 	move.b	#1,(Debug_mode_flag).w
@@ -13987,6 +13987,10 @@ LevelSizeLoad_Cont:
 ; 2 entries per act, corresponding to the X and Y locations that you want the player to
 ; appear at when the level starts.
 ; --------------------------------------------------------------------------------------
+StartLocations_Load:
+	lea	StartLocations(pc,d0.w),a1
+	rts
+
 StartLocations: zoneOrderedTable 2,4	; WrdArr_StartLoc
 	zoneTableBinEntry	2, "startpos/EHZ_1.bin"	; $00
 	zoneTableBinEntry	2, "startpos/EHZ_2.bin"
@@ -14025,6 +14029,11 @@ StartLocations: zoneOrderedTable 2,4	; WrdArr_StartLoc
     zoneTableEnd
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+
+InitCameraValuesFull:
+	move.w	(MainCharacter+y_pos).w,d0
+	subi.w	#$60,d0
+	moveq	#0,d1
 
 ;sub_C258:
 InitCameraValues:
@@ -14210,7 +14219,7 @@ InitCam_Null3:
 ; ===========================================================================
 ;loc_C38C:
 InitCam_ARZ:
-	tst.b	(Current_Act).w
+	tst.b	(Apparent_Act).w
 	beq.s	+
 	subi.w	#$E0,d0
 	lsr.w	#1,d0
@@ -32825,18 +32834,12 @@ Obj_ActTransition:
 	move.b	#1,(ActTransition_Flag).w
 	jmp		DeleteObject
 +
-	bra.w	MarkObjGone
-	rts
+	jmp		MarkObjGone
 
 Obj_ActTransition_BGReset:
+	jsr		InitCameraValuesFull
 	move.w	(Camera_X_pos).w,(Camera_Min_X_pos).w
-	clr.l	(Camera_BG_X_pos).w
-	clr.l	(Camera_ARZ_BG_X_pos).w
-
 	jmp		DeleteObject
-+
-	bra.w	MarkObjGone
-	rts
 
 ; ===========================================================================
 
