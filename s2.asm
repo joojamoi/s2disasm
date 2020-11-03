@@ -1293,6 +1293,8 @@ ClearScreen:
 
 ; sub_1388:
 PauseGame:
+	tst.b	(Update_HUD_timer).w	; has Sonic reached the end of the act?
+	beq.s	Unpause					; if yes, branch
 	tst.b	(Life_count).w		; do you have any lives left?
 	beq.w	Unpause			; if not, branch
 	tst.w	(Game_paused).w		; is game already paused?
@@ -26026,10 +26028,16 @@ BranchTo18_DisplaySprite
 	bra.w	DisplaySprite
 ; ===========================================================================
 
+Obj_Results_Countdown:
 loc_141AA:
 	bsr.w	DisplaySprite
 	move.b	#1,(Update_Bonus_score).w
 	moveq	#0,d0
+
+	move.b	(Ctrl_1_Press).w,d1	; is Start button pressed?
+	andi.b	#button_start_mask,d1
+	bne.w	Obj_Results_Skip		; if yes, branch
+
 	tst.w	(Bonus_Countdown_1).w
 	beq.s	loc_141C6
 	addi.w	#10,d0
@@ -26046,6 +26054,15 @@ loc_141D6:
 	beq.s	loc_141E6
 	addi.w	#10,d0
 	subi.w	#10,(Bonus_Countdown_3).w
+	bra.w	loc_141E6
+
+Obj_Results_Skip:
+	add.w	(Bonus_Countdown_1).w,d0
+	add.w	(Bonus_Countdown_2).w,d0
+	add.w	(Bonus_Countdown_3).w,d0
+	move.w	#0,(Bonus_Countdown_1).w
+	move.w	#0,(Bonus_Countdown_2).w
+	move.w	#0,(Bonus_Countdown_3).w
 
 loc_141E6:
 	add.w	d0,(Total_Bonus_Countdown).w
