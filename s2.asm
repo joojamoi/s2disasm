@@ -12168,6 +12168,10 @@ EndingSequence:
 	jsrto	(NemDec).l, JmpTo_NemDec
 	move.l	#vdpComm(tiles_to_bytes(ArtTile_ArtNem_EndingPics),VRAM,WRITE),(VDP_control_port).l
 	lea	(ArtNem_EndingPics).l,a0
+	cmpi.w	#4,(Ending_Routine).w	; are we Tails?
+	bne.s	+
+	lea	(ArtNem_EndingPicsSonic).l,a0
++
 	jsrto	(NemDec).l, JmpTo_NemDec
 	move.l	#vdpComm(tiles_to_bytes(ArtTile_ArtNem_EndingMiniTornado),VRAM,WRITE),(VDP_control_port).l
 	lea	(ArtNem_EndingMiniTornado).l,a0
@@ -12221,11 +12225,6 @@ EndingSequence:
 	move.b	#6,routine(a1)
 	move.w	#$60,objoff_3C(a1)
 	move.w	#1,objoff_30(a1)
-	cmpi.w	#4,(Ending_Routine).w
-	bne.s	+
-	move.w	#$10,objoff_2E(a1)
-	move.w	#$100,objoff_3C(a1)
-+
 	move.b	#VintID_Ending,(Vint_routine).w
 	jsr		WaitForVint
 	move.w	(VDP_Reg1_val).w,d0
@@ -12495,11 +12494,15 @@ loc_A24E:
 loc_A256:
 	move.w	objoff_2E(a0),d0
 	cmpi.w	#$10,d0
-	bhs.s	+
+	bhs.s	++
 	addq.w	#4,objoff_2E(a0)
 	clr.b	routine(a0)
 	move.l	a0,-(sp)
 	movea.l	off_A29C(pc,d0.w),a0
+	cmpi.w	#4,(Ending_Routine).w
+	bne.s	+
+	movea.l	off_A29C_Sonic(pc,d0.w),a0
++
 	lea	(Chunk_Table).l,a1
 	move.w	#make_art_tile(ArtTile_ArtNem_EndingPics,0,0),d0
 	jsrto	(EniDec).l, JmpTo_EniDec
@@ -12518,6 +12521,12 @@ off_A29C:
 	dc.l MapEng_Ending2
 	dc.l MapEng_Ending3
 	dc.l MapEng_Ending4
+
+off_A29C_Sonic:
+	dc.l MapEng_Ending1Sonic
+	dc.l MapEng_Ending2Sonic
+	dc.l MapEng_Ending3Sonic
+	dc.l MapEng_Ending4Sonic
 ; ===========================================================================
 +
 	move.w	#2,(Ending_VInt_Subrout).w
@@ -12609,12 +12618,6 @@ loc_A34C:
 +
 	addq.b	#2,routine(a0)
 	move.w	#$100,objoff_3C(a0)
-	cmpi.w	#4,(Ending_Routine).w
-	bne.s	return_A38C
-	move.w	#$880,objoff_3C(a0)
-	btst	#6,(Graphics_Flags).w
-	beq.s	return_A38C
-	move.w	#$660,objoff_3C(a0)
 
 return_A38C:
 	rts
@@ -83788,6 +83791,26 @@ MapEng_Ending3:	BINCLUDE	"mappings/misc/End of game sequence frame 3.bin"
 MapEng_Ending4:	BINCLUDE	"mappings/misc/End of game sequence frame 4.bin"
 ;--------------------------------------------------------------------------------------
 ; Enigma compressed sprite mappings
+; Frame 1 of end of game sequence	; MapEng_906E0:
+	even
+MapEng_Ending1Sonic:	BINCLUDE	"mappings/misc/End of game sequence frame 1 (Sonic).bin"
+;--------------------------------------------------------------------------------------
+; Enigma compressed sprite mappings
+; Frame 2 of end of game sequence	; MapEng_906F8:
+	even
+MapEng_Ending2Sonic:	BINCLUDE	"mappings/misc/End of game sequence frame 2 (Sonic).bin"
+;--------------------------------------------------------------------------------------
+; Enigma compressed sprite mappings
+; Frame 3 of end of game sequence	; MapEng_90722:
+	even
+MapEng_Ending3Sonic:	BINCLUDE	"mappings/misc/End of game sequence frame 3 (Sonic).bin"
+;--------------------------------------------------------------------------------------
+; Enigma compressed sprite mappings
+; Frame 4 of end of game sequence	; MapEng_9073C:
+	even
+MapEng_Ending4Sonic:	BINCLUDE	"mappings/misc/End of game sequence frame 4 (Sonic).bin"
+;--------------------------------------------------------------------------------------
+; Enigma compressed sprite mappings
 ; Closeup of Tails flying plane in ending sequence	; MapEng_9076E:
 	even
 MapEng_EndingTailsPlane:	BINCLUDE	"mappings/misc/Closeup of Tails flying plane in ending sequence.bin"
@@ -83801,6 +83824,11 @@ MapEng_EndingSonicPlane:	BINCLUDE	"mappings/misc/Closeup of Sonic flying plane i
 ; Movie sequence at end of game		; ArtNem_90992:
 	even
 ArtNem_EndingPics:	BINCLUDE	"art/nemesis/Movie sequence at end of game.bin"
+;--------------------------------------------------------------------------------------
+; Nemesis compressed art (363 blocks)
+; Movie sequence at end of game		; ArtNem_90992:
+	even
+ArtNem_EndingPicsSonic:	BINCLUDE	"art/nemesis/Movie sequence at end of game (Sonic).bin"
 ;--------------------------------------------------------------------------------------
 ; Nemesis compressed art (127 blocks)
 ; Final image of Tornado with it and Sonic facing screen	; ArtNem_91F3C:
