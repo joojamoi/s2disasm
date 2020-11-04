@@ -4759,7 +4759,7 @@ Level_SetPlayerMode:
 	move.b	#0,(Player_mode).w	; force Sonic and Tails
 
 Level_SetPlayerDetails:
-	move.b	(Player_mode+1).w,(Player_MainChar).w
+	move.b	(Player_mode).w,(Player_MainChar).w
 	move.b  #0,(Player_PartnerChar).w
 ;	lsl.w	#1,d0
 	;move.b	d0,
