@@ -206,8 +206,8 @@ TxtList_TailsFlight:
 	dc.l Txt_Off
 
 TxtList_Scaling:
-	dc.l Txt_Integer
 	dc.l Txt_Fit
+	dc.l Txt_Integer
 	dc.l Txt_Stretch
 
 TxtList_CameraStyle:

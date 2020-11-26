@@ -4635,6 +4635,9 @@ ActTransition:
 	clr.w	(Monitors_Broken).w
 	move.b	#1,(Screen_redraw_flag).w
 
+	move.w	(MainCharacter+x_pos).w,d2
+	sub.w	(Sidekick+x_pos).w,d2
+
 	moveq	#0,d0
 	moveq	#0,d1
 	move.w	(MainCharacter+x_pos).w,d0
@@ -4647,18 +4650,13 @@ ActTransition:
 	sub.w	d1,(Camera_X_pos).w
 	sub.w	d1,(Camera_X_pos_last).w
 
+	move.w	(MainCharacter+x_pos).w,(Sidekick+x_pos).w
+	sub.w	d2,(Sidekick+x_pos).w
+
 	movem.l	(Camera_RAM).w,d0-d7
 	movem.l	d0-d7,(Camera_RAM_copy).w
 	movem.l	(Scroll_flags).w,d0-d3
 	movem.l	d0-d3,(Scroll_flags_copy).w
-
-	moveq	#0,d0
-	move.w	(Sidekick+x_pos).w,d0
-	move.w	d0,d1
-	divu.w	#128,d0
-	swap	d0
-	addi.w	#128,d0
-	move.w	d0,(Sidekick+x_pos).w
 
 	clr.b	(ActTransition_Flag).w
 	rts
@@ -12523,7 +12521,7 @@ off_A29C:
 	dc.l MapEng_Ending4
 
 off_A29C_Sonic:
-	dc.l MapEng_Ending1Sonic
+	dc.l MapEng_Ending1
 	dc.l MapEng_Ending2Sonic
 	dc.l MapEng_Ending3Sonic
 	dc.l MapEng_Ending4Sonic
@@ -25427,6 +25425,7 @@ Obj_TitleCard_Init:
 	moveq	#(Obj_TitleCard_TitleCardData_Transition_End-Obj_TitleCard_TitleCardData_Transition)/$A-1,d1
 +
 -	_move.l	#Obj_TitleCard,id(a1) ; load Obj_TitleCard
+	move.b	subtype(a0),subtype(a1)
 	move.w	#prio(0),priority(a1)
 	move.b	(a2)+,routine(a1)
 	move.l	#Obj_TitleCard_MapUnc_147BA,mappings(a1)
@@ -25729,6 +25728,12 @@ Obj_TitleCard_BackgroundOut_Delete:
 	beq.s	+	; branch if the act number has been unloaded
 	move.b	#$16,TitleCard_ActNumber-TitleCard+routine(a1)
 	move.b	#$2D,TitleCard_ActNumber-TitleCard+anim_frame_duration(a1)
++
+	cmpi.b	#1,subtype(a0)
+	bne.s	+
+	; Unlock right screen bound
+	addi.w	#128*16,(Camera_Max_X_pos).w
+	addi.w	#128*16,(Tails_Max_X_pos).w
 +
 	jmp		DeleteObject
 ; ===========================================================================
@@ -26197,11 +26202,7 @@ StartActTransition:
 	jsr		loadLevelLayout
 	move.l	(TitleCard+id).w,a0			; Restore object pointer
 	move.l	#Obj_TitleCard,(TitleCard+id).w ; load Obj_TitleCard (level title card) at $FFFFB080
-	move.b	#1,(TitleCard+subtype).w ; load Obj_TitleCard (level title card) at $FFFFB080
-
-	; Unlock right screen bound
-	addi.w	#128*16,(Camera_Max_X_pos).w
-	addi.w	#128*16,(Tails_Max_X_pos).w
+	move.b	#1,(TitleCard+subtype).w ; set "level transition" subtype
 	rts
 ; ===========================================================================
 
@@ -32640,6 +32641,8 @@ Obj_Signpost_RingSparklePositions:
 Obj_Signpost_Main_State3:
 	tst.w	(Debug_placement_mode).w
 	bne.w	return_194D0
+	cmpi.b	#1,(Option_ActTransitions).w
+	beq.w	loc_19434
 	cmpi.b	#2,(Option_ActTransitions).w
 	beq.w	return_194D0
 	btst	#1,(MainCharacter+status).w
@@ -83791,11 +83794,6 @@ MapEng_Ending3:	BINCLUDE	"mappings/misc/End of game sequence frame 3.bin"
 MapEng_Ending4:	BINCLUDE	"mappings/misc/End of game sequence frame 4.bin"
 ;--------------------------------------------------------------------------------------
 ; Enigma compressed sprite mappings
-; Frame 1 of end of game sequence	; MapEng_906E0:
-	even
-MapEng_Ending1Sonic:	BINCLUDE	"mappings/misc/End of game sequence frame 1 (Sonic).bin"
-;--------------------------------------------------------------------------------------
-; Enigma compressed sprite mappings
 ; Frame 2 of end of game sequence	; MapEng_906F8:
 	even
 MapEng_Ending2Sonic:	BINCLUDE	"mappings/misc/End of game sequence frame 2 (Sonic).bin"
@@ -84715,7 +84713,9 @@ DualPCM_sz:
 	; share these symbols externally (WARNING: don't rename, move or remove these labels!)
 	shared word_728C_user,Obj_EndingController_MapUnc_7240,off_3A294,MapRUnc_Sonic
 	; these are used for emulator hacks
-	shared mQueue,mFlags,Current_Zone,Current_Act,dPlaySnd,Game_Mode,SSTrack_anim,SS_Cur_Speed_Factor
+	shared mQueue,mFlags,Current_Zone,Current_Act,dPlaySnd,Game_Mode
+	shared SSTrack_anim,SS_Cur_Speed_Factor,Option_Emulator_Scaling
+	shared Option_Emulator_MirrorMode
 
 ; --------------------------------------------------------------------
 	include	"ErrorDebugger/ErrorHandler.asm"

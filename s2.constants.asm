@@ -1435,8 +1435,8 @@ Player_option:			ds.b 1		; 0 = Sonic and Tails, 1 = Sonic, 2 = Tails
 Option_Music:			ds.b 1		; 0 = on, 1 = off
 Option_SFX:				ds.b 1		; 0 = on, 1 = off
 
-Option_Emulator_Scaling:	ds.b 1
-Option_Emulator_MirrorMode:	ds.b 1
+Option_Emulator_Scaling:	ds.b 1	; 0 = normal, 1 = int scaling
+Option_Emulator_MirrorMode:	ds.b 1	; 0 = off, 1 = on
 
 Options_RAM_End:
 
