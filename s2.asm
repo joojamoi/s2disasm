@@ -34435,6 +34435,13 @@ Obj_Shield:
 	move.l	#ArtUnc_Shield,d1
 	move.l	#ArtTile_Shield*32,d2
 	move.w	#(ArtUnc_Shield_end - ArtUnc_Shield)/2, d3
+
+	cmpi.l	#Obj_Knuckles,(MainCharacter+id).w
+	bne.s	+
+	move.l	#ArtUnc_Shield_Knux,d1
+	move.w	#(ArtUnc_Shield_Knux_end - ArtUnc_Shield_Knux)/2, d3
+
++
 	jsr		QueueDMATransfer
 
 	move.l	#Obj_Shield_Shield,(a0)
@@ -34503,6 +34510,13 @@ loc_1D9A4:
 	move.l	#ArtUnc_Invincible_stars,d1
 	move.l	#ArtTile_ArtNem_Invincible_stars*32,d2
 	move.w	#(ArtUnc_Invincible_starsEnd - ArtUnc_Invincible_stars)/2, d3
+
+	cmpi.l	#Obj_Knuckles,(MainCharacter+id).w
+	bne.s	+
+	move.l	#ArtUnc_Invincible_stars_Knux,d1
+	move.w	#(ArtUnc_Invincible_stars_KnuxEnd - ArtUnc_Invincible_stars_Knux)/2, d3
+
++
 	jsr		QueueDMATransfer
 
 	moveq	#0,d2
@@ -82283,8 +82297,7 @@ PlrList_KnucklesLife_End
 ;---------------------------------------------------------------------------------------
 PlrList_Std2Knuckles: plrlistheader
 	plreq ArtTile_ArtNem_Checkpoint, ArtNem_Checkpoint
-	plreq ArtTile_ArtNem_Powerups, ArtNem_Powerups
-	plreq ArtTile_ArtNem_Powerups+$2C, ArtNem_MonitorIconsMod
+	plreq ArtTile_ArtNem_Powerups, ArtNem_PowerupsKnux
 PlrList_Std2Knuckles_End
 ;---------------------------------------------------------------------------------------
 ; Pattern load queue
@@ -82926,6 +82939,12 @@ ArtUnc_Shield_end:
 	even
 ;--------------------------------------------------------------------------------------
 ; Uncompressed art
+; Normal Shield			; ArtNem_71D8E:
+ArtUnc_Shield_Knux:	BINCLUDE	"knuckles/Shield.bin"
+ArtUnc_Shield_Knux_end:
+	even
+;--------------------------------------------------------------------------------------
+; Uncompressed art
 ; Fire Shield
 ArtUnc_FireShield:	BINCLUDE	"art/uncompressed/Fire Shield.bin"
 ArtUnc_FireShield_end:
@@ -82959,6 +82978,12 @@ ArtUnc_InstaShield_end:
 ; Invincibility stars		; ArtNem_71F14:
 ArtUnc_Invincible_stars:	BINCLUDE	"art/uncompressed/Invincibility stars.bin"
 ArtUnc_Invincible_starsEnd:
+	even
+;--------------------------------------------------------------------------------------
+; Uncompressed art
+; Invincibility stars		; ArtNem_71F14:
+ArtUnc_Invincible_stars_Knux:	BINCLUDE	"knuckles/Invincibility stars.bin"
+ArtUnc_Invincible_stars_KnuxEnd:
 	even
 ;--------------------------------------------------------------------------------------
 ; Uncompressed art
@@ -83064,6 +83089,11 @@ ArtNem_Ring:	BINCLUDE	"art/nemesis/Ring.bin"
 ; Monitors and contents		ArtNem_79550:
 	even
 ArtNem_Powerups:	BINCLUDE	"art/nemesis/Monitor and contents.bin"
+;---------------------------------------------------------------------------------------
+; Nemesis compressed art (60 blocks)
+; Monitors and contents		ArtNem_79550:
+	even
+ArtNem_PowerupsKnux:	BINCLUDE	"knuckles/Monitor and contents.bin"
 ;---------------------------------------------------------------------------------------
 ; Nemesis compressed art (8 blocks)
 ; Spikes			7995C:
