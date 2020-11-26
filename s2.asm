@@ -12754,6 +12754,10 @@ loc_A4B6:
 	clr.b	anim_frame(a0)
 	clr.b	anim_frame_duration(a0)
 	move.l	#Obj_TornadoHelixes_MapUnc_ADA2,mappings(a0)
+	cmpi.l	#Obj_Knuckles,(MainCharacter+id).w		; Are we playing as Knuckles?
+	bne.s	+			; If not, branch
+	move.l	#Obj_TornadoHelixes_MapUnc_Knux,mappings(a0)
++
 	move.w	#make_art_tile(ArtTile_ArtKos_LevelArt,0,0),art_tile(a0)
 	jsr	(Adjust2PArtPointer).l
 	subi.w	#$14,x_pos(a0)
@@ -13062,6 +13066,10 @@ Obj_EndingPlyer_Init:
 	lea	(Obj_Cloud_SubObjData).l,a1
 	jsrto	(LoadSubObject_Part3).l, JmpTo_LoadSubObject_Part3
 	move.l	#Obj_TornadoHelixes_MapUnc_ADA2,mappings(a0)
+	cmpi.l	#Obj_Knuckles,(MainCharacter+id).w		; Are we playing as Knuckles?
+	bne.s	+			; If not, branch
+	move.l	#Obj_TornadoHelixes_MapUnc_Knux,mappings(a0)
++
 	move.w	#make_art_tile(ArtTile_ArtKos_LevelArt,0,1),art_tile(a0)
 	move.w	#prio(1),priority(a0)
 	jsr	(Adjust2PArtPointer).l
@@ -13157,6 +13165,10 @@ Obj_TornadoHelixes_Init:
 	lea	(Obj_Cloud_SubObjData).l,a1
 	jsrto	(LoadSubObject_Part3).l, JmpTo_LoadSubObject_Part3
 	move.l	#Obj_TornadoHelixes_MapUnc_ADA2,mappings(a0)
+	cmpi.l	#Obj_Knuckles,(MainCharacter+id).w		; Are we playing as Knuckles?
+	bne.s	+			; If not, branch
+	move.l	#Obj_TornadoHelixes_MapUnc_Knux,mappings(a0)
++
 	move.w	#make_art_tile(ArtTile_ArtKos_LevelArt,0,1),art_tile(a0)
 	move.w	#prio(3),priority(a0)
 	jsr	(Adjust2PArtPointer).l
@@ -13523,6 +13535,7 @@ byte_AD9E:	dc.b   1,  5,  6,$FF
 ; sprite mappings
 ; -----------------------------------------------------------------------------
 Obj_TornadoHelixes_MapUnc_ADA2:	BINCLUDE "mappings/sprite/Obj_TornadoHelixes.bin"
+Obj_TornadoHelixes_MapUnc_Knux: include "knuckles/Ending Mappings.asm"
 ; --------------------------------------------------------------------------------------
 ; Enigma compressed art mappings
 ; "Sonic the Hedgehog 2" mappings		; MapEng_B23A:
