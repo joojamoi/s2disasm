@@ -1627,7 +1627,7 @@ Sonic_Transform:
 
 	move.l	a0,-(sp)		; Backup a0
 	move.l	#MainCharacter,a0
-	lea		(Sonic_top_speed).w,a2	; Load Tails_top_speed into a2
+	lea		(Sonic_top_speed).w,a2
 	jsr		ApplySpeedSettings	; Fetch Speed settings
 	move.l	(sp)+,a0		; Restore a0
 

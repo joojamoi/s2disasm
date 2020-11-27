@@ -128,6 +128,7 @@ Obj_Tails_Control_Part2:
 	andi.w	#$7FF,y_pos(a0)                 ; perform wrapping of Sonic's y position
 +
 	bsr.s	Tails_Display
+	bsr.w	Tails_Super
 	bsr.w	Tails_RecordPos
 	bsr.w	Tails_Water
 	move.b	(Primary_Angle).w,next_tilt(a0)
@@ -415,7 +416,7 @@ loc_1BC68:
 	move.b	spindash_flag(a0),d0
 	beq.s	return_1BCDE
 	move.b	d0,spindash_flag(a1)
-	bsr.w	loc_212C4
+	jsr		loc_212C4
 
 return_1BCDE:
 	rts
@@ -1215,6 +1216,7 @@ Obj_Tails_MdRoll:
 ;        Why they gave it a separate copy of the code, I don't know.
 ; loc_1C082: Obj_Tails_MdJump2:
 Obj_Tails_MdJump:
+	bsr.w	Tails_CheckGoSuper
 	bsr.w	Tails_JumpHeight
 	bsr.w	Tails_AirCurl
 	bsr.w	Tails_ChgJumpDir
@@ -1228,6 +1230,85 @@ Obj_Tails_MdJump:
 	bsr.w	Tails_DoLevelCollision
 	rts
 ; End of subroutine Obj_Tails_MdJump
+
+Tails_CheckGoSuper:
+	move.b	(Ctrl_6btn_1_Press_Logical).w,d0
+	andi.b	#button_Y_mask,d0 ; is Y pressed?
+	beq.w	return_1AC3C_Tails	; if not, return
+	tst.b	(Super_Sonic_flag).w
+	bne.w	Tails_RevertToNormal
+	cmpi.b	#7,(Emerald_count).w	; does Tails have exactly 7 emeralds?
+	bne.s	return_1AC3C_Tails			; if not, branch
+	tst.b	(Update_HUD_timer).w	; has Tails reached the end of the act?
+	beq.w	return_1AC3C_Tails			; if yes, branch
+	cmpi.w	#50,(Ring_count).w		; does Tails have at least 50 rings?
+	blo.w	return_1AC3C_Tails			; if not, branch
+
+Tails_Transform:
+	; HJW: not using a0 so that it can be called from monitor and still work
+	move.b	#1,(Super_Sonic_palette).w
+	move.b	#$F,(Palette_timer).w
+	move.b	#1,(Super_Sonic_flag).w
+	move.b	#$81,(MainCharacter+obj_control).w
+	move.b	#AniIDTailsAni_Transform,(MainCharacter+anim).w			; use transformation animation
+	move.l	#Obj_SuperSonicStars,(SuperSonicStars+id).w ; load Obj_SuperSonicStars (super sonic stars object) at $FFFFD040
+	move.w	#0,(MainCharacter+invincibility_time).w
+	bset	#status_sec_isInvincible,(MainCharacter+status_secondary).w	; make Sonic invincible
+	sfx	sfx_Transform				; Play transformation sound effect.
+
+	move.l	a0,-(sp)		; Backup a0
+	move.l	#MainCharacter,a0
+	lea		(Tails_top_speed).w,a2
+	jsr		ApplySpeedSettings	; Fetch Speed settings
+	move.l	(sp)+,a0		; Restore a0
+
+	tst.b	(Option_SuperMusic).w	; Allow super music?
+	bne.w	return_1ABA4			; If not, branch
+	music	mus_SuperSonic				; load the Super Sonic song and return
+
+; ---------------------------------------------------------------------------
+; Subroutine doing the extra logic for Super Sonic
+; ---------------------------------------------------------------------------
+
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+
+; loc_1ABA6:
+Tails_Super:
+	tst.b	(Super_Sonic_flag).w	; Ignore all this code if not Super Sonic
+	beq.w	return_1AC3C_Tails
+	tst.b	(Update_HUD_timer).w
+	beq.s	Tails_RevertToNormal ; ?
+	subq.w	#1,(Super_Sonic_frame_count).w
+	bpl.w	return_1AC3C_Tails
+	move.w	#60,(Super_Sonic_frame_count).w	; Reset frame counter to 60
+	tst.w	(Ring_count).w
+	beq.s	Tails_RevertToNormal
+	ori.b	#1,(Update_HUD_rings).w
+	cmpi.w	#1,(Ring_count).w
+	beq.s	+
+	cmpi.w	#10,(Ring_count).w
+	beq.s	+
+	cmpi.w	#100,(Ring_count).w
+	bne.s	++
++
+	ori.b	#$80,(Update_HUD_rings).w
++
+	subq.w	#1,(Ring_count).w
+	bne.s	return_1AC3C_Tails
+; loc_1ABF2:
+Tails_RevertToNormal:
+	move.b	#0,(MainCharacter+obj_control).w	; restore Sonic's movement
+	move.b	#2,(Super_Sonic_palette).w	; Remove rotating palette
+	move.w	#$28,(Palette_frame).w
+	move.b	#0,(Super_Sonic_flag).w
+	move.b	#1,next_anim(a0)	; Change animation back to normal ?
+	move.w	#1,invincibility_time(a0)	; Remove invincibility
+	lea		(Tails_top_speed).w,a2	; Load Sonic_top_speed into a2
+	jsr		ApplySpeedSettings	; Fetch Speed settings
+
+return_1AC3C_Tails:
+	rts
+; End of subroutine Sonic_Super
 
 ; ---------------------------------------------------------------------------
 ; Subroutine to make Tails walk/run
@@ -3058,6 +3139,7 @@ TailsAni_Swim_ptr:			offsetTableEntry.w TailsAni_Swim
 TailsAni_SwimFast_ptr:			offsetTableEntry.w TailsAni_SwimFast
 TailsAni_SwimTired_ptr:			offsetTableEntry.w TailsAni_SwimTired
 TailsAni_SwimCarry_ptr:			offsetTableEntry.w TailsAni_SwimCarry
+TailsAni_Transform_ptr:			offsetTableEntry.w TailsAni_Transform
 
 TailsAni_Walk:	dc.b $FF,$10,$11,$12,$13,$14,$15, $E, $F,$FF
 	rev02even
@@ -3145,6 +3227,8 @@ TailsAni_SwimFast:		dc.b   2,$9A,$9B,$9C,$9D,$9E,$FF
 TailsAni_SwimTired:		dc.b   4,$97,$98,$99,$FF
 	even
 TailsAni_SwimCarry:		dc.b   4,$A0,$A1,$FF
+	even
+TailsAni_Transform:		dc.b    2, $A1, $A1, $A2, $A3, $A2, $A3, $A2, $A3, $A2, $A3, $A2, $A3, $FD,   0
 	even
 
 ; ===========================================================================

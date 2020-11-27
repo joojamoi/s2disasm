@@ -673,6 +673,7 @@ AniIDTailsAni_Swim			= id(TailsAni_Swim_ptr)
 AniIDTailsAni_SwimFast		= id(TailsAni_SwimFast_ptr)
 AniIDTailsAni_SwimTired		= id(TailsAni_SwimTired_ptr)
 AniIDTailsAni_SwimCarry		= id(TailsAni_SwimCarry_ptr)
+AniIDTailsAni_Transform		= id(TailsAni_Transform_ptr)
 
 ; Other sizes
 palette_line_size =	$10*2	; 16 word entries

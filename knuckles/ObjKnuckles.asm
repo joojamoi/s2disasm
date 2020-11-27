@@ -811,6 +811,7 @@ loc_315DA6:					  ; ...
 ; ---------------------------------------------------------------------------
 
 Obj_Knuckles_MdJump:					  ; ...
+	bsr.w	Sonic_CheckGoSuper
     bsr.w	Knuckles_JumpHeight
     bsr.w	Sonic_ChgJumpDir
     bsr.w	Sonic_LevelBound
@@ -859,21 +860,21 @@ return_316538:					  ; ...
 ; ---------------------------------------------------------------------------
 
 Knuckles_CheckGlide:				  ; ...
-		;tst.w	(Demo_mode_flag).w		  ; Don't glide on demos
-		;bne.w	return_3165D2
-		tst.b	glidemode(a0)
-		bne.w	return_3165D2
-		move.b	(Ctrl_1_Press_Logical).w,d0
-		andi.b	#button_A_mask|button_B_mask|button_C_mask,d0
-		beq.w	return_3165D2
-		tst.b	(Super_Sonic_flag).w
-		bne.s	Knuckles_AssistCheck
-		cmp.b	#7,(Emerald_count).w
-		bcs.s	Knuckles_AssistCheck
-		cmp.w	#50,(Ring_count).w
-		bcs.s	Knuckles_AssistCheck
-		tst.b	(Update_HUD_timer).w
-		bne.s	Knuckles_TurnSuper
+	;tst.w	(Demo_mode_flag).w		  ; Don't glide on demos
+	;bne.w	return_3165D2
+	tst.b	glidemode(a0)
+	bne.w	return_3165D2
+	move.b	(Ctrl_1_Press_Logical).w,d0
+	andi.b	#button_A_mask|button_B_mask|button_C_mask,d0
+	beq.w	return_3165D2
+	;tst.b	(Super_Sonic_flag).w
+	;bne.s	Knuckles_AssistCheck
+	;cmp.b	#7,(Emerald_count).w
+	;bcs.s	Knuckles_AssistCheck
+	;cmp.w	#50,(Ring_count).w
+	;bcs.s	Knuckles_AssistCheck
+	;tst.b	(Update_HUD_timer).w
+	;bne.s	Knuckles_TurnSuper
 
 Knuckles_AssistCheck:
 		cmpi.l	#Obj_Tails,(Sidekick+id).w

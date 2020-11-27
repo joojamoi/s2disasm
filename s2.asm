@@ -2612,8 +2612,9 @@ CyclingPal_WFZ2:
 
 ; sub_213E:
 PalCycle_SuperSonic:
-	cmpi.b	#3,(Player_MainChar).w	; are we Knuckles?
+	cmpi.l	#Obj_Knuckles,(MainCharacter).w	; are we Knuckles?
 	beq.w	PalCycle_SuperKnuckles	; if we are, run the Super Knuckles cycle instead
+
 	move.b	(Super_Sonic_palette).w,d0
 	beq.s	++	; rts	; return, if Sonic isn't super
 	bmi.w	PalCycle_SuperSonic_normal	; branch, if fade-in is done
@@ -2674,6 +2675,9 @@ PalCycle_SuperSonic_revert:	; runs the fade in transition backwards
 ; ===========================================================================
 ; loc_21E6:
 PalCycle_SuperSonic_normal:
+	cmpi.l	#Obj_Tails,(MainCharacter).w	; are we Tails?
+	beq.w	SuperHyper_PalCycle_NormalTails	; if we are, run the Super Tails cycle instead
+
 	; run frame timer
 	subq.b	#1,(Palette_timer).w
 	bpl.s	-	; rts
@@ -2702,6 +2706,44 @@ PalCycle_SuperSonic_normal:
 	move.l	4(a0,d0.w),(a1)
 	rts
 ; End of function PalCycle_SuperSonic
+
+
+SuperHyper_PalCycle_NormalTails:
+	; run frame timer
+	subq.b	#1,(Palette_timer).w
+	bpl.w	SuperHyper_PalCycle_SuperSonic
+	move.b	#$B,(Palette_timer).w
+
+	; increment palette frame and update Tails' palette
+	lea	(PalCycle_SuperTails).l,a0
+	moveq	#0,d0
+	move.b	(Palette_frame).w,d0
+	addq.b	#6,(Palette_frame).w	; next frame
+	cmpi.b	#$24,(Palette_frame).w	; is it the last frame?
+	blo.s	SuperHyper_PalCycle_ApplyTails	; if not, branch
+	move.b	#0,(Palette_frame).w	; reset frame counter
+	; go straight to SuperHyper_PalCycle_ApplyTails...
+; End of function SuperHyper_PalCycle
+
+
+; =============== S U B R O U T I N E =======================================
+
+
+SuperHyper_PalCycle_ApplyTails:
+	; Tails gets his own because of the unique location of his palette entries
+	lea	(Normal_palette+$16).w,a1
+	move.l	(a0,d0.w),6(a1)		; Write first two palette entries
+	move.w	4(a0,d0.w),(a1)	; Write last palette entry
+	tst.b	(Water_flag).w
+	beq.w	SuperHyper_PalCycle_SuperSonic
+	lea	(Water_palette+$1C).w,a1
+	move.l	(a0,d0.w),(a1)+		; Write first two palette entries
+	move.w	4(a0,d0.w),2(a1)	; Write last palette entry
+	bra.w	SuperHyper_PalCycle_SuperSonic
+; End of function SuperHyper_PalCycle_ApplyTails
+
+SuperHyper_PalCycle_SuperSonic:
+	rts
 
 ; ===========================================================================
 ;----------------------------------------------------------------------------
@@ -2778,6 +2820,13 @@ Pal_SuperKnuckles:dc.w	$428, $64E, $A6E, $64A,	$86E, $C8E, $86C, $A8E,	$EAE; 0	;
 		dc.w  $86C, $A8E, $EAE,	$64A, $86E, $C8E, $428,	$64E, $A6E; 18
 		dc.w  $206, $40C, $84E		  ; 27
 Pal_KnucklesReds:dc.w  $206, $20C, $64E		   ; 0 ; ...
+PalCycle_SuperTails:
+		dc.w $0AE,$08E,$46A
+		dc.w $4CE,$2AE,$46A
+		dc.w $8CE,$4CE,$46C
+		dc.w $AEE,$8CE,$48E
+		dc.w $8CE,$4CE,$46C
+		dc.w $4CE,$2AE,$46A
 
 ; ---------------------------------------------------------------------------
 ; Subroutine to fade in from black
@@ -5661,6 +5710,11 @@ LevelEnd_SetSignpost:
 
 ; sub_4C48:
 CheckLoadSignpostArt:
+	move.w	(Current_ZoneAndAct).w,d0
+	cmp.w	(Apparent_ZoneAndAct).w,d0
+	beq.s	+
+	rts
++
 	tst.b	(Level_Has_Signpost).w
 	beq.s	+	; rts
 	tst.w	(Debug_placement_mode).w
@@ -19846,7 +19900,7 @@ Obj_Bridge:
 ; ===========================================================================
 +	; child sprite objects only need to be drawn
 	move.w	#prio(3),a1
-	bra.w	DisplaySprite3
+	jmp		DisplaySprite3
 ; ===========================================================================
 ; off_F68C:
 Obj_Bridge_Index:	offsetTable
@@ -19867,7 +19921,7 @@ Obj_Bridge_Init:
 	move.l	#Obj_Bridge_MapUnc_FC28,mappings(a0)
 	move.w	#make_art_tile(ArtTile_ArtNem_HPZ_Bridge,3,0),art_tile(a0)
 +
-	bsr.w	Adjust2PArtPointer
+	jsr		Adjust2PArtPointer
 	move.b	#4,render_flags(a0)
 	move.b	#$80,width_pixels(a0)
 	move.w	y_pos(a0),d2
@@ -19991,17 +20045,17 @@ Obj_Bridge_Unload:
 ; ---------------------------------------------------------------------------
 +	; delete first subsprite object
 	movea.w	Obj_Bridge_child1(a0),a1 ; a1=object
-	bsr.w	DeleteObject2
+	jsr		DeleteObject2
 	cmpi.b	#8,subtype(a0)
 	bls.s	+	; if bridge has more than 8 logs, delete second subsprite object
 	movea.w	Obj_Bridge_child2(a0),a1 ; a1=object
-	bsr.w	DeleteObject2
+	jsr		DeleteObject2
 +
-	bra.w	DeleteObject
+	jmp		DeleteObject
 ; ===========================================================================
 ; loc_F80C: BranchTo_DisplaySprite:
 Obj_Bridge_Display:
-	bra.w	DisplaySprite
+	jmp		DisplaySprite
 ; ===========================================================================
 ; loc_F810: Obj_Bridge_Action_HPZ:
 Obj_Bridge_HPZ:
@@ -20407,7 +20461,7 @@ Obj_SwingingPlatform_Init:
 	move.b	#$20,width_pixels(a0)
 	move.b	#8,y_radius(a0)
 +
-	bsr.w	Adjust2PArtPointer
+	jsr		Adjust2PArtPointer
 	moveq	#0,d1
 	move.b	subtype(a0),d1
 	bpl.s	+
@@ -23643,7 +23697,7 @@ SolidObject_Monitor_Sonic:
 	beq.w	+		; if so, branch
 	cmpi.b	#AniIDSonAni_DropDash,anim(a1)		; is Sonic spinning?
 	beq.w	+		; if so, branch
-	bra.w	SolidObject_cont
+	jmp		SolidObject_cont
 +
     addq.b    #pushing_bit_delta,d6
     btst    d6,status(a0)    ; check if we're pushing
@@ -23660,7 +23714,7 @@ SolidObject_Monitor_Knuckles:
 	cmp.b	#3,glidemode(a1)
 	beq.s	+
 	cmpi.b	#AniIDSonAni_Roll,anim(a1)
-	bne.w	SolidObject_cont
+	jne		SolidObject_cont
     addq.b    #pushing_bit_delta,d6
     btst    d6,status(a0)    ; check if we're pushing
     beq.s    +
@@ -23675,10 +23729,10 @@ SolidObject_Monitor_Tails:
 	btst	d6,status(a0)			; is Tails standing on the monitor?
 	bne.s	Obj_Monitor_ChkOverEdge		; if yes, branch
 	tst.w	(Two_player_mode).w		; is it two player mode?
-	beq.w	SolidObject_cont		; if not, branch
+	jeq		SolidObject_cont		; if not, branch
 	; in one player mode monitors always behave as solid for Tails
 	cmpi.b	#AniIDTailsAni_Roll,anim(a1)	; is Tails spinning?
-	bne.w	SolidObject_cont		; if not, branch
+	jne		SolidObject_cont		; if not, branch
     addq.b    #pushing_bit_delta,d6
     btst    d6,status(a0)    ; check if we're pushing
     beq.s    +
@@ -23715,7 +23769,7 @@ Obj_Monitor_ChkOverEdge:
 ;loc_127B2:
 Obj_Monitor_CharStandOn:
 	move.w	d4,d2
-	bsr.w	MvSonicOnPtfm
+	jsr		MvSonicOnPtfm
 	moveq	#0,d4
 	rts
 ; ===========================================================================
@@ -24368,6 +24422,7 @@ Obj_IntroStars_Dest =	objoff_2A
 Obj_IntroStars_Dest =	y_pixel
 	endif
 Obj_IntroStars:
+;	include "knuckles/Title Screen.asm"
 	moveq	#0,d0
 	move.b	routine(a0),d0
 	move.w	Obj_IntroStars_Index(pc,d0.w),d1
@@ -26190,6 +26245,7 @@ loc_1429C:
 	rts
 +
 	move.w	d0,(Current_ZoneAndAct).w
+	move.w	d0,(Apparent_ZoneAndAct).w
 	clr.b	(Last_star_pole_hit).w
 	clr.b	(Last_star_pole_hit_2P).w
 	move.b	#1,(Level_Inactive_flag).w
@@ -27238,7 +27294,7 @@ loc_15714: ; Draw level?
 -	movem.l	d4-d6,-(sp)
 	moveq	#-$30,d5
 	move.w	d4,d1
-	bsr.w	CalcBlockVRAMPosB
+	jsr		CalcBlockVRAMPosB
 	move.w	d1,d4
 	moveq	#-$30,d5
 	moveq	#$1F,d6
@@ -31763,6 +31819,12 @@ loc_189CA:
 	move.w	#$100,anim(a0)
 	addq.w	#8,y_pos(a1)
 	move.w	objoff_30(a0),y_vel(a1)
+	; Restore player height (tails is shorter)
+	move.b	#$13,y_radius(a1)
+	cmpi.l	#Obj_Tails,id(a1)
+	bne.s	+
+	move.b	#$F,y_radius(a1)
++
 	bset	#1,status(a1)
 	bclr	#3,status(a1)
 
@@ -32114,6 +32176,12 @@ loc_18DD8:
 	move.w	#$500,anim(a0)
 	move.w	objoff_30(a0),y_vel(a1)
 	move.w	objoff_30(a0),x_vel(a1)
+	; Restore player height (tails is shorter)
+	move.b	#$13,y_radius(a1)
+	cmpi.l	#Obj_Tails,id(a1)
+	bne.s	+
+	move.b	#$F,y_radius(a1)
++
 	addq.w	#6,y_pos(a1)
 	addq.w	#6,x_pos(a1)
 	bset	#0,status(a1)
@@ -32655,7 +32723,7 @@ Obj_Signpost_Main_State3:
 	tst.w	(Debug_placement_mode).w
 	bne.w	return_194D0
 	cmpi.b	#1,(Option_ActTransitions).w
-	beq.w	loc_19434
+	beq.w	loc_1944C
 	cmpi.b	#2,(Option_ActTransitions).w
 	beq.w	return_194D0
 	btst	#1,(MainCharacter+status).w
@@ -32669,7 +32737,7 @@ loc_19434:
 	beq.s	loc_1944C
 	move.w	(MainCharacter+x_pos).w,d0
 	move.w	(Camera_Max_X_pos).w,d1
-	addi.w	#$128,d1
+	addi.w	#$128+40,d1
 	cmp.w	d1,d0
 	blo.w	return_194D0
 
@@ -34430,7 +34498,7 @@ Obj_Shield:
 	move.w	#prio(1),priority(a0)
 	move.b	#$18,width_pixels(a0)
 	move.w	#make_art_tile(ArtTile_Shield,0,0),art_tile(a0)
-	bsr.w	Adjust2PArtPointer
+	jsr		Adjust2PArtPointer
 
 	move.l	#ArtUnc_Shield,d1
 	move.l	#ArtTile_Shield*32,d2
@@ -34528,7 +34596,7 @@ loc_1D9A4:
 	move.b	#4,objoff_A(a1)		; => loc_1DA80
 	move.l	#Obj_InvincibilityStars_MapUnc_1DCBC,mappings(a1)
 	move.w	#make_art_tile(ArtTile_ArtNem_Invincible_stars,0,0),art_tile(a1)
-	bsr.w	Adjust2PArtPointer2
+	jsr		Adjust2PArtPointer2
 	move.b	#4,render_flags(a1)
 	bset	#6,render_flags(a1)
 	move.b	#$10,mainspr_width(a1)
