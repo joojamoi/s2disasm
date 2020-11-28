@@ -1423,29 +1423,16 @@ Sonic_InstaAndShieldMoves:
 ; ---------------------------------------------------------------------------
 
 Sonic_PrimaryAbility:
-	cmpi.b	#1,(Option_SonicAbility).l
-	beq.s	Sonic_FireShield
-	cmpi.b	#2,(Option_SonicAbility).l
-	beq.s	Sonic_FireShield
-	cmpi.b	#3,(Option_SonicAbility).l
-	beq.s	Sonic_FireShield
-
 	cmpi.b	#4,(Option_SonicAbility).l
-	bne.s	+
-	bsr.w	Sonic_HomingAttack
-+
+	beq.w	Sonic_HomingAttack
 	cmpi.b	#5,(Option_SonicAbility).l
-	bne.s	+
-	bsr.w	Sonic_ShieldControl
-+
-	btst	#Status_Shield,status_secondary(a0)	; does Sonic have a Shield
-	beq.w	Sonic_InstaAndDrop			; if not, branch
+	beq.w	Sonic_ShieldControl
 
 Sonic_FireShield:
 	tst.b	(Option_InvincShields).w	; Allow shields while invinc?
 	bne.s	+							; If so, branch
 	btst	#Status_Invincible,status_secondary(a0)	; first, does Sonic have invincibility?
-	bne.w	Sonic_MidInvinc				; if yes, branch
+	bne.w	Sonic_DropDashStart				; if yes, branch
 +
 	btst	#Status_FireShield,status_secondary(a0)	; does Sonic have a Fire Shield?
 	beq.s	Sonic_LightningShield			; if not, branch
@@ -1497,7 +1484,7 @@ Sonic_BubbleShield:
 
 Sonic_BubbleShieldDo:
 	; Check again because shield control might be active
-	btst	#Status_BublShield,status_secondary(a0)	; does Sonic have a Lightning Shield?
+	btst	#Status_BublShield,status_secondary(a0)	; does Sonic have a Bubble Shield?
 	beq.s	+			; if not, branch
 	move.b	#1,(Shield+anim).w
 +
@@ -1549,8 +1536,6 @@ Sonic_HomingAttack:
 Sonic_InstaAndDrop:
 	bsr.s	Sonic_InstaShield
 
-Sonic_MidInvinc:
-
 Sonic_DropDashStart:
 	cmpi.b	#2,(Option_SonicAbility).l
 	beq.s	+
@@ -1583,20 +1568,13 @@ locret_11A14:
 	rts
 
 Sonic_ShieldControl:
-	cmpi.b	#5,(Option_SonicAbility).l
-	beq.s	Sonic_ShieldControlCont
-	rts
-
-Sonic_ShieldControlCont:
 	btst	#button_up,(Ctrl_1_Held_logical).w
 	bne.w	Sonic_LightningShieldDo
 	btst	#button_down,(Ctrl_1_Held_logical).w
-	beq.w	+
+	beq.w	Sonic_FireShieldDo
 	bsr.w	Sonic_BubbleShieldDo
 	move.b	#2,double_jump_flag(a0)
 	rts
-+
-	bra.w	Sonic_FireShieldDo
 
 ; ---------------------------------------------------------------------------
 
@@ -2515,11 +2493,13 @@ BubbleShield_Bounce:
 	beq.s	++
 	cmpi.l  #Obj_Sonic,id(a0)
 	bne.s	++
-
+	cmpi.b	#4,(Option_SonicAbility).l
+	beq.s	++
 	cmpi.b	#5,(Option_SonicAbility).l
 	bne.s	+
 	cmpi.b	#2,double_jump_flag(a0)
 	beq.w	BubbleShield_Bounce_Start
+	rts
 +
 	;tst.b	(Super_Sonic_flag).w
 	;bne.s	+
@@ -2571,7 +2551,10 @@ loc_12246:
 
 loc_122AA:
 	sub.w	d0,y_pos(a0)
+	btst	#Status_BublShield,status_secondary(a0)	; does character have a bubble shield?
+	beq.w	+	; if not, branch
 	move.b	#2,(Shield+anim).w
++
 	sfx		sfx_BubbleAttack
 
 loc_122AA_ret:

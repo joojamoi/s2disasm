@@ -1084,6 +1084,15 @@ PalToCRAM:
 	movem.l	a0-a1,-(sp)
 	lea	(VDP_data_port).l,a1
 	lea	(Underwater_palette).w,a0 	; load palette from RAM
+	; Title card flicker fix
+	move.l	d0,-(sp)
+	move.w	(Water_Level_1).w,d0
+	subi.w	#224,d0
+	cmp.w	(Camera_Y_pos).w,d0
+	ble.s	+
+	lea	(Normal_palette).w,a0 	; load palette from RAM
++
+	move.l	(sp)+,d0
 	move.l	#vdpComm($0000,CRAM,WRITE),4(a1)	; set VDP to write to CRAM address $00
     rept 32
 	move.l	(a0)+,(a1)	; move palette to CRAM (all 64 colors at once)
@@ -2636,28 +2645,28 @@ PalCycle_SuperSonic:
 	move.b	#-1,(Super_Sonic_palette).w	; mark fade-in as done
 	move.b	#0,(MainCharacter+obj_control).w	; restore Sonic's movement
 +
-	lea	(Normal_palette+4).w,a1
-	move.l	(a0,d0.w),(a1)+
-	move.l	4(a0,d0.w),(a1)
-	; note: the fade in for Sonic's underwater palette is missing.
-	; branch to the code below (*) to fix this
-/	rts
+	bra.w	SuperHyper_PalCycle_Apply
++	rts
 ; ===========================================================================
 ; loc_2188:
 PalCycle_SuperSonic_revert:	; runs the fade in transition backwards
+	cmpi.l	#Obj_Sonic,(MainCharacter).w	; are we Sonic?
+	bne.w	SuperHyper_PalCycle_RevertNotSonic	; if we aren't, branch
+
 	; run frame timer
 	subq.b	#1,(Palette_timer).w
-	bpl.s	-	; rts
+	bpl.w	SuperHyper_PalCycle_Apply_Ret	; rts
 	move.b	#3,(Palette_timer).w
 
 	; decrement palette frame and update Sonic's palette
 	lea	(CyclingPal_SSTransformation).l,a0
 	move.w	(Palette_frame).w,d0
 	subq.w	#8,(Palette_frame).w	; previous frame
-	bcc.s	+			; branch, if it isn't the first frame
+	bcc.s	SuperHyper_PalCycle_Apply			; branch, if it isn't the first frame
 	move.w	#0,(Palette_frame).w
 	move.b	#0,(Super_Sonic_palette).w	; stop palette cycle
-+
+
+SuperHyper_PalCycle_Apply:
 	lea	(Normal_palette+4).w,a1
 	move.l	(a0,d0.w),(a1)+
 	move.l	4(a0,d0.w),(a1)
@@ -2666,12 +2675,25 @@ PalCycle_SuperSonic_revert:	; runs the fade in transition backwards
 	cmpi.b	#chemical_plant_zone,(Current_Zone).w
 	beq.s	+
 	cmpi.b	#aquatic_ruin_zone,(Current_Zone).w
-	bne.s	-	; rts
+	bne.s	SuperHyper_PalCycle_Apply_Ret	; rts
 	lea	(CyclingPal_ARZUWTransformation).l,a0
 +	lea	(Underwater_palette+4).w,a1
 	move.l	(a0,d0.w),(a1)+
 	move.l	4(a0,d0.w),(a1)
+
+SuperHyper_PalCycle_Apply_Ret:
 	rts
+
+SuperHyper_PalCycle_RevertNotSonic:
+	moveq	#0,d0
+	move.w	d0,(Palette_frame).w
+	move.b	d0,(Super_Sonic_palette).w	; 0 = off
+	;move.b	d0,(Palette_frame_Tails).w
+
+	lea	(PalCycle_SuperTails).l,a0		; Used here because the first set of colours is Tails' normal palette
+	bsr.w	SuperHyper_PalCycle_ApplyTails
+	lea	(CyclingPal_SSTransformation).l,a0		; Why does Tails manipulate Sonic's palette? For his Super-form's Super Flickies
+	bra.w	SuperHyper_PalCycle_Apply
 ; ===========================================================================
 ; loc_21E6:
 PalCycle_SuperSonic_normal:
@@ -2680,7 +2702,7 @@ PalCycle_SuperSonic_normal:
 
 	; run frame timer
 	subq.b	#1,(Palette_timer).w
-	bpl.s	-	; rts
+	bpl.w	++	; rts
 	move.b	#7,(Palette_timer).w
 
 	; increment palette frame and update Sonic's palette
@@ -2704,7 +2726,7 @@ PalCycle_SuperSonic_normal:
 +	lea	(Underwater_palette+4).w,a1
 	move.l	(a0,d0.w),(a1)+
 	move.l	4(a0,d0.w),(a1)
-	rts
++	rts
 ; End of function PalCycle_SuperSonic
 
 

@@ -1238,7 +1238,7 @@ Tails_CheckGoSuper:
 	tst.b	(Super_Sonic_flag).w
 	bne.w	Tails_RevertToNormal
 	cmpi.b	#7,(Emerald_count).w	; does Tails have exactly 7 emeralds?
-	bne.s	return_1AC3C_Tails			; if not, branch
+	bne.w	return_1AC3C_Tails			; if not, branch
 	tst.b	(Update_HUD_timer).w	; has Tails reached the end of the act?
 	beq.w	return_1AC3C_Tails			; if yes, branch
 	cmpi.w	#50,(Ring_count).w		; does Tails have at least 50 rings?
