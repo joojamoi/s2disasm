@@ -96,12 +96,15 @@ Obj_Tails_Control:
 +
 	move.w	(Ctrl_1_Logical).w,(Ctrl_2_Logical).w
 	move.w	(Ctrl_6btn_1_Logical).w,(Ctrl_6btn_2_Logical).w
+	move.w	(Ctrl_Analog_1_Logical).w,(Ctrl_Analog_2_Logical).w	; copy new held buttons, to enable joypad control
+
 	tst.b	(Control_Locked).w	; are controls locked?
 	bne.s	Obj_Tails_Control_Part2	; if yes, branch
 	move.w	(Ctrl_1).w,(Ctrl_2_Logical).w	; copy new held buttons, to enable joypad control
 	move.w	(Ctrl_6btn_1).w,(Ctrl_6btn_2_Logical).w	; copy new held buttons, to enable joypad control
 	move.w	(Ctrl_1).w,(Ctrl_1_Logical).w
 	move.w	(Ctrl_6btn_1).w,(Ctrl_6btn_1_Logical).w
+	move.w	(Ctrl_Analog_1).w,(Ctrl_Analog_1_Logical).w	; copy new held buttons, to enable joypad control
 	bra.s	Obj_Tails_Control_Part2
 ; ---------------------------------------------------------------------------
 ; loc_1B9D4:
@@ -554,6 +557,7 @@ TailsCPU_Normal_SendAction:
 TailsCPU_Normal_FlyingControl:
 	move.w	(Ctrl_1_Logical).w,(Ctrl_2_Logical).w
 	move.w	(Ctrl_6btn_1_Logical).w,(Ctrl_6btn_2_Logical).w
+	move.w	(Ctrl_Analog_1_Logical).w,(Ctrl_Analog_2_Logical).w	; copy new held buttons, to enable joypad control
 	rts
 
 ; ===========================================================================
@@ -1319,6 +1323,25 @@ return_1AC3C_Tails:
 ; loc_1C0AC:
 Tails_Move:
 	move.w	(Tails_top_speed).w,d6
+
+	moveq	#0,d0
+	move.b	(Ctrl_Analog_2_X_Logical).w,d0
+
+	subi.w	#31,d0
+    bpl.b   +
+    neg.w   d0
+	addi.w	#1,d0
++
+	move.w	#32,d1
+	sub.w	d0,d1
+	lsr.w	#2,d1
+
+	cmpi.w	#8,d1
+	beq.s	+
+	
+	lsr.w	d1,d6
++
+
 	move.w	(Tails_acceleration).w,d5
 	move.w	(Tails_deceleration).w,d4
     if status_sec_isSliding = 7
@@ -1803,6 +1826,25 @@ Tails_BrakeRollingLeft:
 ; loc_1C4CE:
 Tails_ChgJumpDir:
 	move.w	(Tails_top_speed).w,d6
+
+	moveq	#0,d0
+	move.b	(Ctrl_Analog_2_X_Logical).w,d0
+
+	subi.w	#31,d0
+    bpl.b   +
+    neg.w   d0
+	addi.w	#1,d0
++
+	move.w	#32,d1
+	sub.w	d0,d1
+	lsr.w	#2,d1
+
+	cmpi.w	#8,d1
+	beq.s	+
+	
+	lsr.w	d1,d6
++
+
 	move.w	(Tails_acceleration).w,d5
 	asl.w	#1,d5
 	btst	#4,status(a0)		; did Tails jump from rolling?

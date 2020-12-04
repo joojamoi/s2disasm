@@ -449,7 +449,7 @@ GameMode_Demo:		bra.w	Level			; Demo mode
 GameMode_Level:		bra.w	Level			; Zone play mode
 GameMode_SpecialStage:	bra.w	SpecialStage		; Special stage play mode
 GameMode_ContinueScreen:bra.w	ContinueScreen		; Continue mode
-GameMode_2PResults:	bra.w	TwoPlayerResults	; 2P results mode
+GameMode_2PResults:		bra.w	JmpTo_TwoPlayerResults	; 2P results mode
 GameMode_2PLevelSelect:	bra.w	LevelSelectMenu2P	; 2P level select mode
 GameMode_EndingSequence:bra.w	JmpTo_EndingSequence	; End sequence mode
 GameMode_OptionsMenu:	bra.w	OptionsMenu		; Options mode
@@ -480,6 +480,9 @@ LevelSelectMenu2P: ;;
 ; loc_3F6:
 JmpTo_EndingSequence ; JmpTo
 	jmp	(EndingSequence).l
+; ===========================================================================
+JmpTo_TwoPlayerResults ; JmpTo
+	jmp	(TwoPlayerResults).l
 ; ===========================================================================
 ; loc_3FC:
 OptionsMenu: ;;
@@ -1146,6 +1149,7 @@ JoypadInit:
 ReadJoypads:
 	lea	(Ctrl_1).w,a0	; address where joypad states are written
 	lea	(Ctrl_6btn_1).w,a2	; address where 6btn joypad states are written
+	lea	(Ctrl_Analog_1).w,a3	; address where 6btn joypad states are written
 	lea	(HW_Port_1_Data).l,a1	; first joypad port
 	bsr.s	get_pad
 	addq.w	#2,a1			; do the second joypad
@@ -1158,7 +1162,9 @@ get_pad:
         move.w  d0,d1
         andi.w  #$0C00,d0
         bne.b   no_pad
-        bsr.b   get_input       ; - 0 s a 0 0 d u - 1 c b r l d u 
+        bsr.b   get_input       ; 8bit analog X, 8 bit analog Y
+		andi.w	#$3F3F,d0
+		move.w	d0,(a3)+
         bsr.b   get_input       ; - 0 s a 0 0 0 0 - 1 c b m x y z 
         move.w  d0,d2
         bsr.b   get_input       ; - 0 s a 1 1 1 1 - 1 c b r l d u 
@@ -3372,6 +3378,7 @@ PalPtr_Result:	palptr Pal_Result,0
 PalPtr_Knux:	palptr Pal_Knux,  0
 PalPtr_CPZ_K_U:	palptr Pal_CPZ_K_U, 0
 PalPtr_ARZ_K_U:	palptr Pal_ARZ_K_U, 0
+PalPtr_SS_Knux:	palptr Pal_SS_Knux,   0
 
 ; ----------------------------------------------------------------------------
 ; This macro defines Pal_ABC and Pal_ABC_End, so palptr can compute the size of
@@ -3425,6 +3432,8 @@ Pal_Result:palette Special Stage Results Screen.bin ; Special Stage Results Scre
 Pal_Knux:  palette Knuckles.bin,SonicAndTails2.bin ; "Sonic and Miles" background palette (also usually the primary palette line)
 Pal_CPZ_K_U: palette CPZ Knux underwater.bin ; Chemical Plant Zone underwater palette
 Pal_ARZ_K_U: palette ARZ Knux underwater.bin ; Aquatic Ruin Zone underwater palette
+Pal_SS_Knux: palette Special Stage Main Knux.bin
+
 ; ===========================================================================
 
     if gameRevision<2
@@ -4484,12 +4493,18 @@ Level_TtlCard:
 	jsr	(ConvertCollisionArray).l
 	bsr.w	LoadCollisionIndexes
 	bsr.w	WaterEffects
+
 	move.w	#0,(Ctrl_1_Logical).w
 	move.w	#0,(Ctrl_6btn_1_Logical).w
+	move.w	#0,(Ctrl_Analog_1_Logical).w	; copy new held buttons, to enable joypad control
+
 	move.w	#0,(Ctrl_2_Logical).w
 	move.w	#0,(Ctrl_6btn_2_Logical).w
+	move.w	#0,(Ctrl_Analog_2_Logical).w	; copy new held buttons, to enable joypad control
+
 	move.w	#0,(Ctrl_1).w
 	move.w	#0,(Ctrl_2).w
+
 	move.b	#1,(Control_Locked).w
 	move.b	#1,(Control_Locked_P2).w
 	move.b	#0,(Level_started_flag).w
@@ -6233,6 +6248,10 @@ SpecialStage:
 	bsr.w	ssLdComprsdData
 	move.w	#0,(SpecialStage_CurrentSegment).w
 	moveq	#PLCID_SpecialStage,d0
+	cmpi.b	#3,(Player_MainChar).w
+	bne.s	+
+	moveq	#PLCID_SpecialStage_Knux,d0
++
 	bsr.w	RunPLC_ROM
 	clr.b	(Level_started_flag).w
 	move.l	#0,(Camera_X_pos).w	; probably means something else in this context
@@ -6240,11 +6259,12 @@ SpecialStage:
 	move.l	#0,(Camera_X_pos_copy).w
 	move.l	#0,(Camera_Y_pos_copy).w
 
-	cmpi.b	#1,(Player_mode).w	; is this a Tails alone game?
-	bgt.s	+			; if yes, branch
+	jsr		Level_SetPlayerDetails
+	cmpi.b	#2,(Player_mode).w	; is this a Tails alone game?
+	beq.s	+			; if yes, branch
 	move.l	#Obj_SonicSS,(MainCharacter+id).w ; load Obj_SonicSS (special stage Sonic)
-	tst.b	(Player_mode).w		; is this a Sonic and Tails game?
-	bne.s	++			; if not, branch
+	tst.b	(Player_PartnerChar).w		; is this a Sonic and Tails game?
+	beq.s	++			; if not, branch
 +	move.l	#Obj_TailsSS,(Sidekick+id).w ; load Obj_TailsSS (special stage Tails)
 
 +	move.l	#Obj_SSHUD,(SpecialStageHUD+id).w ; load Obj_SSHUD (special stage HUD)
@@ -6254,13 +6274,15 @@ SpecialStage:
 	move.w	#$80,(SS_Offset_X).w
 	move.w	#$36,(SS_Offset_Y).w
 	bsr.w	SSPlaneB_Background
-	bsr.w	SSDecompressPlayerArt
 	bsr.w	SSInitPalAndData
 	move.l	#$C0000*2/3,(SS_New_Speed_Factor).w
 	clr.w	(Ctrl_1_Logical).w
 	clr.w	(Ctrl_6btn_1_Logical).w
+	clr.w	(Ctrl_Analog_1_Logical).w
+
 	clr.w	(Ctrl_2_Logical).w
 	clr.w	(Ctrl_6btn_2_Logical).w
+	clr.w	(Ctrl_Analog_2_Logical).w
 
 -	move.b	#VintID_S2SS,(Vint_routine).w
 	bsr.w	WaitForVint
@@ -6294,8 +6316,10 @@ SpecialStage:
 -	bsr.w	PauseGame
 	move.w	(Ctrl_1).w,(Ctrl_1_Logical).w
 	move.w	(Ctrl_6btn_1).w,(Ctrl_6btn_1_Logical).w
+	move.w	(Ctrl_Analog_1).w,(Ctrl_Analog_1_Logical).w
 	move.w	(Ctrl_2).w,(Ctrl_2_Logical).w
 	move.w	(Ctrl_6btn_2).w,(Ctrl_6btn_2_Logical).w
+	move.w	(Ctrl_Analog_2).w,(Ctrl_Analog_2_Logical).w
 	cmpi.b	#GameModeID_SpecialStage,(Game_Mode).w ; special stage mode?
 	bne.w	SpecialStage_Unpause		; if not, branch
 	move.b	#VintID_S2SS,(Vint_routine).w
@@ -6338,15 +6362,19 @@ SpecialStage:
 +
 	move.w	(Ctrl_1).w,(Ctrl_1_Logical).w
 	move.w	(Ctrl_6btn_1).w,(Ctrl_6btn_1_Logical).w
+	move.w	(Ctrl_Analog_1).w,(Ctrl_Analog_1_Logical).w
+
 	move.w	(Ctrl_2).w,(Ctrl_2_Logical).w
 	move.w	(Ctrl_6btn_2).w,(Ctrl_6btn_2_Logical).w
+	move.w	(Ctrl_Analog_2).w,(Ctrl_Analog_2_Logical).w
+
 +
 	jsr	(RunObjects).l
 	tst.b	(SS_Check_Rings_flag).w
 	bne.s	+
 	jsr	(BuildSprites).l
 	bsr.w	RunPLC_RAM
-	bra.s	-
+	bra.w	-
 ; ===========================================================================
 +
 	andi.b	#7,(Emerald_count).w
@@ -6392,10 +6420,8 @@ SpecialStage:
 	move.l	#vdpComm(tiles_to_bytes(ArtTile_ArtNem_SpecialStageResults),VRAM,WRITE),(VDP_control_port).l
 	lea	(ArtNem_SpecialStageResults).l,a0
 	bsr.w	NemDec
-	move.b	(Player_mode).w,d0
-	beq.s	++
-	subq.w	#1,d0
-	beq.s	+
+	move.b	(Player_MainChar).w,d0
+	subi.b	#1,d0
 	clr.w	(Ring_count).w
 	bra.s	++
 ; ===========================================================================
@@ -8813,17 +8839,6 @@ SSPlaneB_Background:
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
 
-;sub_6DD4
-SSDecompressPlayerArt:
-	lea	(ArtNem_SpecialSonicAndTails).l,a0
-	lea	(SSRAM_ArtNem_SpecialSonicAndTails & $FFFFFF).l,a4
-	bra.w	NemDecToRAM
-; End of function SSDecompressPlayerArt
-
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-
 ;sub_6DE4
 SS_ScrollBG:
 	bsr.w	SSPlaneB_SetHorizOffset
@@ -9083,16 +9098,26 @@ Obj_SSHUD:
 	beq.s	+
 	addq.w	#6,d1
 	tst.b	(Graphics_Flags).w
-	bpl.s	++
+	bpl.s	Obj_SSHUD_Cont
 	addq.w	#1,d1
-	bra.s	++
+	bra.s	Obj_SSHUD_Cont
 ; ---------------------------------------------------------------------------
-+	move.b	(Player_mode).w,d1
++
+	; This is kinda hacky and should be rewritten, make HUD work for knux
+	move.b	(Player_mode).w,d1
+	cmpi.b	#3,d1
+	bne.s	+
+	move.b	#1,d1
++
+	cmpi.b	#4,d1
+	bne.s	+
+	move.b	#0,d1
++
 	andi.w	#3,d1
 	tst.b	(Graphics_Flags).w
-	bpl.s	+
+	bpl.s	Obj_SSHUD_Cont
 	addq.w	#3,d1 ; set special stage tails name to "TAILS" instead of MILES
-+
+Obj_SSHUD_Cont:
 	add.w	d1,d1
 	moveq	#0,d2
 	moveq	#0,d3
@@ -9373,8 +9398,8 @@ Obj_SSNumberOfRings_Init:
 	move.w	d0,sub7_y_pos-sub2_x_pos(a1)	; sub7_y_pos
 	tst.b	(SS_2p_Flag).w
 	bne.s	+++
-	cmpi.b	#0,(Player_mode).w
-	beq.s	+
+	cmpi.b	#0,(Player_PartnerChar).w
+	bne.s	+
 	subi_.b	#1,mainspr_childsprites(a0)
 	move.w	#$94,(a1)			; sub2_x_pos
 	rts
@@ -9449,14 +9474,16 @@ loc_7480:
 	move.w	d3,d4
 	subq.w	#1,d4
 	move.w	#$48,d1
-	tst.b	(Player_mode).w
+	cmpi.b	#0,(Player_mode).w
+	beq.s	+
+	cmpi.b	#4,(Player_mode).w
 	beq.s	+
 	addi.w	#$54,d1
 /	move.w	d1,(a1,d5.w)
 	addi_.w	#8,d1
 	addq.w	#next_subspr,d5
 	dbf	d4,-
-	cmpi.b	#1,(Player_mode).w
+	cmpi.b	#0,(Player_PartnerChar).w
 	beq.s	loc_7536
 
 loc_74EA:
@@ -9481,7 +9508,9 @@ loc_74EA:
 	add.w	d4,d3
 	subq.w	#1,d4
 	move.w	#$E0,d1
-	tst.b	(Player_mode).w
+	cmpi.b	#0,(Player_mode).w
+	beq.s	+
+	cmpi.b	#4,(Player_mode).w
 	beq.s	+
 	subi.w	#$44,d1
 /	move.w	d1,(a1,d5.w)
@@ -9666,12 +9695,9 @@ SSStartNewAct:
 	add.w	d0,d0
 	add.w	d0,d0
 	add.w	d1,d0
-	tst.b	(Player_mode).w
-	bne.s	+
 	move.b	SpecialStage_RingReq_Team(pc,d0.w),d1
-	bra.s	++
-; ===========================================================================
-+
+	tst.b	(Player_PartnerChar).w
+	beq.s	+
 	move.b	SpecialStage_RingReq_Alone(pc,d0.w),d1
 +
 	move.w	d1,(SS_Ring_Requirement).w
@@ -9762,6 +9788,10 @@ SSInitPalAndData:
 	move.w	d0,(a2)+
 	move.w	d0,(a2)+
 	moveq	#PalID_SS,d0
+	cmpi.b	#3,(Player_MainChar).w
+	bne.s	+
+	moveq	#PalID_SS_Knux,d0
++
 	bsr.w	PalLoad_ForFade
 	lea_	SpecialStage_Palettes,a1
 	moveq	#0,d0
@@ -11658,7 +11688,7 @@ MenuScreen_LevelSelect:
 
     clr.b    (Water_fullscreen_flag).w
 
-	bsr.w	Pal_FadeFromBlack
+	jsr		Pal_FadeFromBlack
 
 ;loc_93AC:
 LevelSelect_Main:	; routine running during level select
@@ -61852,6 +61882,10 @@ Obj_SonicSS_Init:
 	move.b	#$E,y_radius(a0)
 	move.b	#7,x_radius(a0)
 	move.l	#Obj_SonicSS_MapUnc_34212,mappings(a0)
+	cmpi.b	#3,(Player_MainChar).w
+	bne.s	+
+	move.l	#Obj_SonicSS_MapUnc_Knux,mappings(a0)
++
 	move.w	#make_art_tile(ArtTile_ArtNem_SpecialSonic,1,0),art_tile(a0)
 	move.b	#4,render_flags(a0)
 	move.w	#prio(3),priority(a0)
@@ -61950,11 +61984,6 @@ byte_33A92:
 	dc.b   0,  2	; 10
 	dc.b   4,  3	; 12
 	dc.b  $C,  1	; 14
-dword_33AA2:
-	dc.l   (SSRAM_ArtNem_SpecialSonicAndTails & $FFFFFF) + tiles_to_bytes($000)		; Sonic in upright position, $58 tiles
-	dc.l   (SSRAM_ArtNem_SpecialSonicAndTails & $FFFFFF) + tiles_to_bytes($058)		; Sonic in diagonal position, $CC tiles
-	dc.l   (SSRAM_ArtNem_SpecialSonicAndTails & $FFFFFF) + tiles_to_bytes($124)		; Sonic in horizontal position, $4D tiles
-	dc.l   (SSRAM_ArtNem_SpecialSonicAndTails & $FFFFFF) + tiles_to_bytes($171)		; Sonic in ball form, $12 tiles
 ; ===========================================================================
 
 LoadSSSonicDynPLC:
@@ -61968,7 +61997,12 @@ LoadSSSonicDynPLC:
 ; ===========================================================================
 +
 	jsrto	(DisplaySprite).l, JmpTo42_DisplaySprite
-	lea	dword_33AA2(pc),a3
+	move.l	#ArtUnc_SpecialCharacter,d6
+	lea	(Obj09_MapRUnc).l,a2
+	cmpi.b	#3,(Player_MainChar).w
+	bne.s	+
+	lea	(Obj_SonicSS_MapRUnc_Knux).l,a2
++
 	lea	(Sonic_LastLoadedDPLC).w,a4
 	move.w	#tiles_to_bytes(ArtTile_ArtNem_SpecialSonic),d4
 	moveq	#0,d1
@@ -61977,30 +62011,14 @@ LoadSSPlayerDynPLC:
 	moveq	#0,d0
 	move.b	mapping_frame(a0),d0
 	cmp.b	(a4),d0
-	beq.s	return_33B3E
+	beq.s	+
 	move.b	d0,(a4)
-	moveq	#0,d6
-	cmpi.b	#4,d0
-	blt.s	loc_33AFE
-	addq.w	#4,d6
-	cmpi.b	#$C,d0
-	blt.s	loc_33AFE
-	addq.w	#4,d6
-	cmpi.b	#$10,d0
-	blt.s	loc_33AFE
-	addq.b	#4,d6
-
-loc_33AFE:
-	move.l	(a3,d6.w),d6
-	add.w	d1,d0
 	add.w	d0,d0
-	lea	(Obj_SonicSS_MapRUnc_345FA).l,a2
 	adda.w	(a2,d0.w),a2
 	move.w	(a2)+,d5
 	subq.w	#1,d5
-	bmi.s	return_33B3E
-
-SSPLC_ReadEntry:
+	bmi.s	+
+-
 	moveq	#0,d1
 	move.w	(a2)+,d1
 	move.w	d1,d3
@@ -62008,15 +62026,14 @@ SSPLC_ReadEntry:
 	andi.w	#$F0,d3
 	addi.w	#$10,d3
 	andi.w	#$FFF,d1
-	lsl.w	#1,d1
+	lsl.w	#5,d1
 	add.l	d6,d1
 	move.w	d4,d2
 	add.w	d3,d4
 	add.w	d3,d4
 	jsr	(QueueDMATransfer).l
-	dbf	d5,SSPLC_ReadEntry
-
-return_33B3E:
+	dbf	d5,-
++
 	rts
 ; ===========================================================================
 
@@ -62677,22 +62694,16 @@ byte_34208:
 ; sprite mappings - uses ArtNem_SpecialSonicAndTails
 ; ----------------------------------------------------------------------------
 Obj_SonicSS_MapUnc_34212:	BINCLUDE "mappings/sprite/Obj_SonicSS.bin"
+Obj_SonicSS_MapUnc_Knux:	include "knuckles/Special Stage Mappings.asm"
 ; ----------------------------------------------------------------------------
 ; sprite mappings for special stage shadows
 ; ----------------------------------------------------------------------------
 Obj_SSShadow_MapUnc_34492:	BINCLUDE "mappings/sprite/Obj_SSShadow.bin"
 ; ----------------------------------------------------------------------------
-; custom dynamic pattern loading cues for special stage Sonic, Tails and
-; Tails' tails
-; The first $12 frames are for Sonic, and the next $12 frames are for Tails.
-; The last $15 frames are for Tails' tails.
-; The first $24 frames are almost normal dplcs -- the only difference being
-; that the art tile to load is pre-shifted left by 4 bits.
-; The same applies to the last $15 frames, but they have yet another difference:
-; a small space optimization. These frames only have one dplc per frame ever,
-; hence the two-byte dplc count is removed from each frame.
-; ----------------------------------------------------------------------------
-Obj_SonicSS_MapRUnc_345FA:	BINCLUDE "mappings/spriteDPLC/Obj_SonicSS.bin"
+Obj_SonicSS_MapRUnc_Knux:	include "knuckles/Special Stage DPLC.asm"
+Obj10_MapRUnc:	BINCLUDE "mappings/spriteDPLC/obj10.bin"
+Obj09_MapRUnc:	BINCLUDE "mappings/spriteDPLC/obj09.bin"
+Obj88_MapRUnc:	BINCLUDE "mappings/spriteDPLC/obj88.bin"
 ; ===========================================================================
 
     if ~~removeJmpTos
@@ -62744,8 +62755,8 @@ Obj_TailsSS_Init:
 	move.b	#4,render_flags(a0)
 	move.w	#prio(2),priority(a0)
 	move.w	#$80,ss_z_pos(a0)
-	tst.b	(Player_mode).w
-	beq.s	loc_34864
+	tst.b	(Player_PartnerChar).w
+	bne.s	loc_34864
 	move.w	#prio(3),priority(a0)
 	move.w	#$6E,ss_z_pos(a0)
 
@@ -62788,8 +62799,8 @@ Obj_TailsSS_MdNormal:
 	bne.s	Obj_TailsSS_Hurt
 	bsr.w	SSTailsCPU_Control
 	lea	(Ctrl_2_Held_Logical).w,a2
-	tst.b	(Player_mode).w
-	beq.s	+
+	tst.b	(Player_PartnerChar).w
+	bne.s	+
 	lea	(Ctrl_1_Held_Logical).w,a2
 +
 	bsr.w	SSPlayer_Move
@@ -62799,8 +62810,8 @@ Obj_TailsSS_MdNormal:
 	bsr.w	SSObjectMove
 	bsr.w	SSAnglePos
 	lea	(Ctrl_2_Press_Logical).w,a2
-	tst.b	(Player_mode).w
-	beq.s	+
+	tst.b	(Player_PartnerChar).w
+	bne.s	+
 	lea	(Ctrl_1_Press_Logical).w,a2
 +
 	bsr.w	SSPlayer_Jump
@@ -62822,8 +62833,8 @@ Obj_TailsSS_Hurt:
 SSTailsCPU_Control:
 	tst.b	(SS_2p_Flag).w
 	bne.s	+
-	tst.b	(Player_mode).w
-	beq.s	++
+	tst.b	(Player_PartnerChar).w
+	bne.s	++
 +
 	rts
 ; ===========================================================================
@@ -62852,12 +62863,6 @@ SSTailsCPU_Control:
 	move.w	(a1),(Ctrl_2_Logical).w
 	rts
 ; ===========================================================================
-dword_349B8:
-	dc.l   (SSRAM_ArtNem_SpecialSonicAndTails & $FFFFFF) + tiles_to_bytes($183)		; Tails in upright position, $3D tiles
-	dc.l   (SSRAM_ArtNem_SpecialSonicAndTails & $FFFFFF) + tiles_to_bytes($1C0)		; Tails in diagonal position, $A4 tiles
-	dc.l   (SSRAM_ArtNem_SpecialSonicAndTails & $FFFFFF) + tiles_to_bytes($264)		; Tails in horizontal position, $3A tiles
-	dc.l   (SSRAM_ArtNem_SpecialSonicAndTails & $FFFFFF) + tiles_to_bytes($29E)		; Tails in ball form, $10 tiles
-; ===========================================================================
 
 LoadSSTailsDynPLC:
 	move.b	ss_dplc_timer(a0),d0
@@ -62870,17 +62875,18 @@ LoadSSTailsDynPLC:
 ; ===========================================================================
 +
 	jsrto	(DisplaySprite).l, JmpTo43_DisplaySprite
-	lea	dword_349B8(pc),a3
+	move.l	#ArtUnc_SpecialCharacter,d6
+	lea	(Obj10_MapRUnc).l,a2
 	lea	(Tails_LastLoadedDPLC).w,a4
 	move.w	#tiles_to_bytes(ArtTile_ArtNem_SpecialTails),d4
-	moveq	#$12,d1
+	moveq	#0,d1
 	bra.w	LoadSSPlayerDynPLC
 ; ===========================================================================
 
 Obj_TailsSS_MdJump:
 	lea	(Ctrl_2_Held_Logical).w,a2
-	tst.b	(Player_mode).w
-	beq.s	+
+	tst.b	(Player_PartnerChar).w
+	bne.s	+
 	lea	(Ctrl_1_Held_Logical).w,a2
 +
 	bsr.w	SSPlayer_ChgJumpDir
@@ -62896,8 +62902,8 @@ Obj_TailsSS_MdJump:
 
 Obj_TailsSS_MdAir:
 	lea	(Ctrl_2_Held_Logical).w,a2
-	tst.b	(Player_mode).w
-	beq.s	+
+	tst.b	(Player_PartnerChar).w
+	bne.s	+
 	lea	(Ctrl_1_Held_Logical).w,a2
 +
 	bsr.w	SSPlayer_ChgJumpDir
@@ -62935,11 +62941,6 @@ Obj_SSTailsTails:
 return_34A9E:
 	rts
 ; ===========================================================================
-dword_34AA0:
-	dc.l   (SSRAM_ArtNem_SpecialSonicAndTails & $FFFFFF) + tiles_to_bytes($2AE)		; Tails' tails when he is in upright position, $35 tiles
-	dc.l   (SSRAM_ArtNem_SpecialSonicAndTails & $FFFFFF) + tiles_to_bytes($2E3)		; Tails' tails when he is in diagonal position, $3B tiles
-	dc.l   (SSRAM_ArtNem_SpecialSonicAndTails & $FFFFFF) + tiles_to_bytes($31E)		; Tails' tails when he is in horizontal position, $35 tiles
-; ===========================================================================
 
 LoadSSTailsTailsDynPLC:
 	movea.l	ss_parent(a0),a1 ; load obj address of Tails
@@ -62951,39 +62952,12 @@ LoadSSTailsTailsDynPLC:
 ; ===========================================================================
 +
 	jsrto	(DisplaySprite).l, JmpTo43_DisplaySprite
-	moveq	#0,d0
-	move.b	mapping_frame(a0),d0
-	cmp.b	(TailsTails_LastLoadedDPLC).w,d0
-	beq.s	return_34B1A
-	move.b	d0,(TailsTails_LastLoadedDPLC).w
-	moveq	#0,d6
-	cmpi.b	#7,d0
-	blt.s	loc_34AE4
-	addq.w	#4,d6
-	cmpi.b	#$E,d0
-	blt.s	loc_34AE4
-	addq.w	#4,d6
-
-loc_34AE4:
-	move.l	dword_34AA0(pc,d6.w),d6
-	addi.w	#$24,d0
-	add.w	d0,d0
-	lea	(Obj_SonicSS_MapRUnc_345FA).l,a2
-	adda.w	(a2,d0.w),a2
-	move.w	#tiles_to_bytes(ArtTile_ArtNem_SpecialTails_Tails),d2
+	move.l	#ArtUnc_SpecialCharacter,d6
+	lea	(Obj88_MapRUnc).l,a2
+	lea	(TailsTails_LastLoadedDPLC).w,a4
+	move.w	#tiles_to_bytes(ArtTile_ArtNem_SpecialTails_Tails),d4
 	moveq	#0,d1
-	move.w	(a2)+,d1
-	move.w	d1,d3
-	lsr.w	#8,d3
-	andi.w	#$F0,d3
-	addi.w	#$10,d3
-	andi.w	#$FFF,d1
-	lsl.w	#1,d1
-	add.l	d6,d1
-	jsr	(QueueDMATransfer).l
-
-return_34B1A:
-	rts
+	bra.w	LoadSSPlayerDynPLC
 ; ===========================================================================
 off_34B1C:	offsetTable
 		offsetTableEntry.w byte_34B24	; 0
@@ -63933,8 +63907,8 @@ Obj_SSMessage_RingsNeeded:
 ; ===========================================================================
 +
 	move.w	(Ring_count).w,d0
-	cmpi.b	#1,(Player_mode).w
-	blt.s	+
+	tst.b	(Player_PartnerChar).w
+	bne.s	+
 	beq.s	++
 	move.w	(Ring_count_2P).w,d0
 	bra.s	++
@@ -64534,8 +64508,8 @@ Obj_SSMessage_CreateRingReqMessage:
 Obj_SSMessage_PrintCheckpointMessage:
 	move.w	#$80,d3				; x
 	bsr.w	Obj_SSMessage_CreateCheckpointWingedHand
-	cmpi.b	#1,(Player_mode).w
-	ble.s	loc_35D6E
+	tst.b	(Player_PartnerChar).w
+	beq.s	loc_35D6E
 	addi.w	#palette_line_1,art_tile(a1)
 	addi.w	#palette_line_1,art_tile(a2)
 
@@ -81734,6 +81708,7 @@ PLCptr_Std2Knuckles:	offsetTableEntry.w PlrList_Std2Knuckles
 PLCptr_ResultsKnuckles:	offsetTableEntry.w PlrList_ResultsKnuckles
 PLCptr_SignpostKnuckles:	offsetTableEntry.w PlrList_SignpostKnuckles
 PLCptr_TitleCard:	offsetTableEntry.w PlrList_TitleCard
+PLCptr_SpecialStage_Knux:	offsetTableEntry.w PlrList_SpecialStage_Knux		; 60
 
 ; macro for a pattern load request list header
 ; must be on the same line as a label that has a corresponding _End label later
@@ -82638,13 +82613,13 @@ PlrList_ArzAnimals_Dup: plrlistheader
 	plreq ArtTile_ArtNem_Animal_2, ArtNem_Bird
 PlrList_ArzAnimals_Dup_End
 ;---------------------------------------------------------------------------------------
-; Pattern load queue (duplicate)
+; Pattern load queue (Knuckles)
 ; Special Stage
 ;---------------------------------------------------------------------------------------
-PlrList_SpecialStage_Dup: plrlistheader
+PlrList_SpecialStage_Knux: plrlistheader
 	plreq ArtTile_ArtNem_SpecialEmerald, ArtNem_SpecialEmerald
 	plreq ArtTile_ArtNem_SpecialMessages, ArtNem_SpecialMessages
-	plreq ArtTile_ArtNem_SpecialHUD, ArtNem_SpecialHUD
+	plreq ArtTile_ArtNem_SpecialHUD, ArtNem_SpecialHUD_Knux
 	plreq ArtTile_ArtNem_SpecialFlatShadow, ArtNem_SpecialFlatShadow
 	plreq ArtTile_ArtNem_SpecialDiagShadow, ArtNem_SpecialDiagShadow
 	plreq ArtTile_ArtNem_SpecialSideShadow, ArtNem_SpecialSideShadow
@@ -82655,7 +82630,7 @@ PlrList_SpecialStage_Dup: plrlistheader
 	plreq ArtTile_ArtNem_SpecialBack, ArtNem_SpecialBack
 	plreq ArtTile_ArtNem_SpecialStars, ArtNem_SpecialStars
 	plreq ArtTile_ArtNem_SpecialTailsText, ArtNem_SpecialTailsText
-PlrList_SpecialStage_Dup_End
+PlrList_SpecialStage_Knux_End
 ;---------------------------------------------------------------------------------------
 ; Pattern load queue (duplicate)
 ; Special Stage Bombs
@@ -84385,6 +84360,11 @@ MapEng_SpecialBackBottom:	BINCLUDE	"mappings/misc/Lower background mappings for 
 	even
 ArtNem_SpecialHUD:	BINCLUDE	"art/nemesis/Sonic and Miles number text from special stage.bin"
 ;--------------------------------------------------------------------------------------
+; Nemesis compressed art (62 blocks)
+; Sonic/Miles and number text from special stage	; ArtNem_DD48A:
+	even
+ArtNem_SpecialHUD_Knux:	BINCLUDE	"knuckles/Special Stage HUD Art.bin"
+;--------------------------------------------------------------------------------------
 ; Nemesis compressed art (48 blocks)
 ; "Start" and checkered flag patterns in special stage	; ArtNem_DD790:
 	even
@@ -84439,12 +84419,6 @@ ArtNem_SpecialEmerald:	BINCLUDE	"art/nemesis/Emerald from special stage.bin"
 ; Text for the messages and thumbs up/down icon in special stage	; ArtNem_DEAF4:
 	even
 ArtNem_SpecialMessages:	BINCLUDE	"art/nemesis/Special stage messages and icons.bin"
-;--------------------------------------------------------------------------------------
-; Nemesis compressed art (851 blocks)
-; Sonic and Tails animation frames from special stage
-; Art for Obj_SonicSS and Obj_TailsSS and Obj_SSTailsTails	; ArtNem_DEEAE:
-	even
-ArtNem_SpecialSonicAndTails:	BINCLUDE	"art/nemesis/Sonic and Tails animation frames in special stage.bin"
 ;--------------------------------------------------------------------------------------
 ; Nemesis compressed art (5 blocks)
 ; "Tails" patterns from special stage	; ArtNem_E247E:
@@ -84814,6 +84788,12 @@ ArtUnc_Tails:	BINCLUDE	"art/uncompressed/Tails's art.bin"
 ;---------------------------------------------------------------------------------------
 	align $20
 ArtUnc_Knuckles:	BINCLUDE	"knuckles/art.bin"
+
+;--------------------------------------------------------------------------------------
+; Uncompressed art
+; Character animation frames from special stage
+	align $20
+ArtUnc_SpecialCharacter:	BINCLUDE	"art/uncompressed/Character animation frames in special stage.bin"
 
 ; --------------------------------------------------------------------
 ; Include AMPS related files

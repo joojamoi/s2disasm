@@ -84,6 +84,7 @@ Obj_Sonic_Control:
 	bne.s	+			; if yes, branch
 	move.w	(Ctrl_1).w,(Ctrl_1_Logical).w	; copy new held buttons, to enable joypad control
 	move.w	(Ctrl_6btn_1).w,(Ctrl_6btn_1_Logical).w	; copy new held buttons, to enable joypad control
+	move.w	(Ctrl_Analog_1).w,(Ctrl_Analog_1_Logical).w	; copy new held buttons, to enable joypad control
 +
 	btst	#0,obj_control(a0)	; is Sonic interacting with another object that holds him in place or controls his movement somehow?
 	bne.s	+			; if yes, branch to skip Sonic's control
@@ -504,6 +505,25 @@ Sonic_DropDashCancel:
 ; loc_1A35A:
 Sonic_Move:
 	move.w	(Sonic_top_speed).w,d6
+
+	moveq	#0,d0
+	move.b	(Ctrl_Analog_1_X_Logical).w,d0
+
+	subi.w	#31,d0
+    bpl.b   +
+    neg.w   d0
+	addi.w	#1,d0
++
+	move.w	#32,d1
+	sub.w	d0,d1
+	lsr.w	#2,d1
+
+	cmpi.w	#8,d1
+	beq.s	+
+	
+	lsr.w	d1,d6
++
+
 	move.w	(Sonic_acceleration).w,d5
 	move.w	(Sonic_deceleration).w,d4
     if status_sec_isSliding = 7
@@ -1093,6 +1113,25 @@ Sonic_BrakeRollingLeft:
 ; loc_1A8E8:
 Sonic_ChgJumpDir:
 	move.w	(Sonic_top_speed).w,d6
+
+	moveq	#0,d0
+	move.b	(Ctrl_Analog_1_X_Logical).w,d0
+
+	subi.w	#31,d0
+    bpl.b   +
+    neg.w   d0
+	addi.w	#1,d0
++
+	move.w	#32,d1
+	sub.w	d0,d1
+	lsr.w	#2,d1
+
+	cmpi.w	#8,d1
+	beq.s	+
+	
+	lsr.w	d1,d6
++
+
 	move.w	(Sonic_acceleration).w,d5
 	asl.w	#1,d5
 	btst	#4,status(a0)		; did Sonic jump from rolling?
@@ -1584,8 +1623,10 @@ Sonic_CheckGoSuper:
 	beq.w	return_1ABA4	; if not, return
 	tst.b	(Super_Sonic_flag).w
 	bne.w	Sonic_RevertToNormal
-	cmpi.b	#7,(Emerald_count).w	; does Sonic have exactly 7 emeralds?
-	bne.s	return_1ABA4			; if not, branch
+	move.w	#50,(Ring_count).w		; does Sonic have at least 50 rings?
+	
+	;cmpi.b	#7,(Emerald_count).w	; does Sonic have exactly 7 emeralds?
+	;bne.s	return_1ABA4			; if not, branch
 	tst.b	(Update_HUD_timer).w	; has Sonic reached the end of the act?
 	beq.s	return_1ABA4			; if yes, branch
 	cmpi.w	#50,(Ring_count).w		; does Sonic have at least 50 rings?

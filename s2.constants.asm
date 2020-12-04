@@ -495,6 +495,7 @@ PalID_Result =	id(PalPtr_Result) ; 27
 PalID_Knux =	id(PalPtr_Knux) ; 28
 PalID_CPZ_K_U =	id(PalPtr_CPZ_K_U) ; 29
 PalID_ARZ_K_U =	id(PalPtr_ARZ_K_U) ; 30
+PalID_SS_Knux =	id(PalPtr_SS_Knux)
 
 ; PLC IDs
 offset :=	ArtLoadCues
@@ -573,6 +574,7 @@ PLCID_Std2Knuckles =	id(PLCptr_Std2Knuckles)
 PLCID_ResultsKnuckles =	id(PLCptr_ResultsKnuckles)
 PLCID_SignpostKnuckles =	id(PLCptr_SignpostKnuckles)
 PLCID_TitleCard =	id(PLCptr_TitleCard)
+PLCID_SpecialStage_Knux =	id(PLCptr_SpecialStage_Knux) ; 3C
 
 ; 2P VS results screens
 offset := TwoPlayerResultsPointers
@@ -945,10 +947,6 @@ Ctrl_2_Held_Logical:		ds.b 1		; 1 byte
 Ctrl_2_Press_Logical:		ds.b 1		; 1 byte
 
 ; Extra buttons
-Ctrl_6btn_1_Logical:					; 2 bytes
-Ctrl_6btn_1_Held_Logical:		ds.b 1		; 1 byte
-Ctrl_6btn_1_pressed_logical:
-Ctrl_6btn_1_Press_Logical:		ds.b 1		; 1 byte
 Ctrl_6btn_1:						; 2 bytes
 Ctrl_6btn_1_Held:			ds.b 1		; 1 byte ; (pressed and held were switched around before)
 Ctrl_6btn_1_pressed:
@@ -958,9 +956,30 @@ Ctrl_6btn_2:						; 2 bytes
 Ctrl_6btn_2_Held:			ds.b 1		; 1 byte
 Ctrl_6btn_2_pressed:
 Ctrl_6btn_2_Press:			ds.b 1		; 1 byte
+
+Ctrl_6btn_1_Logical:					; 2 bytes
+Ctrl_6btn_1_Held_Logical:		ds.b 1		; 1 byte
+Ctrl_6btn_1_Press_Logical:		ds.b 1		; 1 byte
+
 Ctrl_6btn_2_Logical:					; 2 bytes
 Ctrl_6btn_2_Held_Logical:		ds.b 1		; 1 byte
 Ctrl_6btn_2_Press_Logical:		ds.b 1		; 1 byte
+
+Ctrl_Analog_1:
+Ctrl_Analog_1_X:			ds.b 1
+Ctrl_Analog_1_Y:			ds.b 1
+
+Ctrl_Analog_2:
+Ctrl_Analog_2_X:			ds.b 1
+Ctrl_Analog_2_Y:			ds.b 1
+
+Ctrl_Analog_1_Logical:
+Ctrl_Analog_1_X_Logical:			ds.b 1
+Ctrl_Analog_1_Y_Logical:			ds.b 1
+
+Ctrl_Analog_2_Logical:
+Ctrl_Analog_2_X_Logical:			ds.b 1
+Ctrl_Analog_2_Y_Logical:			ds.b 1
 
 VDP_reg_1_command:
 VDP_Reg1_val:			ds.w 1		; normal value of VDP register #1 when display is disabled
@@ -1819,9 +1838,9 @@ ArtTile_ArtNem_SpecialMessages        = $01A2
 ArtTile_ArtNem_SpecialHUD             = $01FA
 ArtTile_ArtNem_SpecialFlatShadow      = $023C
 ArtTile_ArtNem_SpecialDiagShadow      = $0262
-ArtTile_ArtNem_SpecialSideShadow      = $029C
-ArtTile_ArtNem_SpecialExplosion       = $02B5
-ArtTile_ArtNem_SpecialSonic           = $02E5
+ArtTile_ArtNem_SpecialSideShadow      = $04E0
+ArtTile_ArtNem_SpecialExplosion       = $02B5-$19
+ArtTile_ArtNem_SpecialSonic           = $02E5-$19
 ArtTile_ArtNem_SpecialTails           = $0300
 ArtTile_ArtNem_SpecialTails_Tails     = $0316
 ArtTile_ArtNem_SpecialRings           = $0322
