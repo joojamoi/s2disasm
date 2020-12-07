@@ -9906,9 +9906,13 @@ ContinueScreen:
 	bsr.w	NemDec
 	move.l	#vdpComm(tiles_to_bytes(ArtTile_ArtNem_MiniContinue),VRAM,WRITE),(VDP_control_port).l
 	lea	(ArtNem_MiniSonic).l,a0
-	cmpi.b	#2,(Player_mode).w
+	cmpi.b	#2,(Player_MainChar).w
 	bne.s	+
 	lea	(ArtNem_MiniTails).l,a0
++
+	cmpi.b	#3,(Player_MainChar).w
+	bne.s	+
+	lea	(ArtNem_MiniKnuckles).l,a0
 +
 	bsr.w	NemDec
 	moveq	#$A,d1
@@ -10159,22 +10163,32 @@ Obj_ContinueChars_Sonic_Init:
 	move.w	#$9C,x_pos(a0)
 	move.w	#$19C,y_pos(a0)
 	move.l	#Mapunc_Sonic,mappings(a0)
+	move.b	#$20,anim(a0)
+	cmpi.b	#3,(Player_MainChar).w
+	bne.s	+
+	move.l	#Mapunc_Knuckles,mappings(a0)
+	move.b	#AniIDSonAni_Wait,anim(a0)
++
 	move.w	#make_art_tile(ArtTile_ArtUnc_Sonic,0,0),art_tile(a0)
 	move.b	#4,render_flags(a0)
 	move.w	#prio(2),priority(a0)
-	move.b	#$20,anim(a0)
 
 ; loc_7BD2:
 Obj_ContinueChars_Sonic_Wait:
 	tst.b	(Ctrl_1_Press).w	; is start pressed?
 	bmi.s	Obj_ContinueChars_Sonic_StartRunning ; if yes, branch
+	cmpi.b	#3,(Player_MainChar).w
+	bne.s	+
+	jsr	(Knuckles_Animate).l
+	jmp	(LoadKnucklesDynPLC).l
++
 	jsr	(Sonic_Animate).l
 	jmp	(LoadSonicDynPLC).l
 ; ---------------------------------------------------------------------------
 ; loc_7BE4:
 Obj_ContinueChars_Sonic_StartRunning:
 	addq.b	#2,routine(a0) ; => Obj_ContinueChars_Sonic_Run
-	move.b	#$21,anim(a0)
+	move.b	#AniIDSonAni_Walk,anim(a0)
 	clr.w	inertia(a0)
 	sfx	sfx_Spindash
 
@@ -10189,6 +10203,11 @@ Obj_ContinueChars_Sonic_Run:
 	addi.w	#$20,inertia(a0)
 +
 	jsr	(ObjectMove).l
+	cmpi.b	#3,(Player_MainChar).w
+	bne.s	+
+	jsr	(Knuckles_Animate).l
+	jmp	(LoadKnucklesDynPLC).l
++
 	jsr	(Sonic_Animate).l
 	jmp	(LoadSonicDynPLC).l
 ; ===========================================================================
@@ -15369,13 +15388,15 @@ SwScrl_MCZ:
 	bne.w	SwScrl_MCZ_2P
 	move.w	(Camera_Y_pos).w,d0
 	move.l	(Camera_BG_Y_pos).w,d3
+	; Remove act check for act transitions
+	; Thankfully act 2's offset works fine for act 1
 	;tst.b	(Current_Act).w
 	;bne.s	+
-	divu.w	#3,d0
-	subi.w	#$140,d0
-	bra.s	++
+;	divu.w	#3,d0
+;	subi.w	#$140,d0
+;	bra.s	++
 ; ===========================================================================
-+
+;+
 	divu.w	#6,d0
 	subi.w	#$10,d0
 +
@@ -28061,40 +28082,6 @@ Obj3C_MapUnc_15ECC:	BINCLUDE "mappings/sprite/obj3C.bin"
 ; ===========================================================================
 	bra.w	ObjNull
 
-
-; https://www.atari-forum.com/viewtopic.php?t=4984
-; In: d1
-; Out: d0
-; Uses: d2,d3
-sqrt_nyh1:
-	move.l  #$40000000,d1   ; mask
-.loop0:
-	cmp.l   d1,d0           ; x-tmp<0?
-	bcs.s   .cont0          ; yep
-	move.l  d1,d2           ; result=mask
-	sub.l   d1,d0           ; x-=mask
-	lsr.l   #2,d1           ; mask>>=2
-	bne.s   .loop1
-	move.l  d2,d0           ; d0=result
-	rts
-.cont0:
-	lsr.l   #2,d1           ; mask>>=2
-	bne.s   .loop0
-	rts
-.loop1:
-	move.l  d2,d3           ; tmp=result
-	add.l   d1,d3           ; tmp+=mask
-	lsr.l   #1,d2           ; result>>=1
-	cmp.l   d3,d0           ; x-tmp<0?
-	bcs.s   .cont1          ; yep
-	sub.l   d3,d0           ; x-=tmp
-	add.l   d1,d2           ; result+=mask
-.cont1:
-	lsr.l   #2,d1           ; mask>>=2;
-	bne.s   .loop1          ; nogmal
-	move.l  d2,d0           ; d0=result
-	rts                     ; Einde
-
 ; Output:
 ; d0: distance
 ; a1: object
@@ -28109,7 +28096,7 @@ FindClosestTargetInFront_Loop:
 	lea	next_object(a2),a2 ; load obj address
 	dbf	d6,FindClosestTargetInFront_Loop
 	moveq	#0,d0
-	move.w	d5,d0
+	move.l	d5,d0
 	rts
 
 FindClosestTargetInFront_Iterate:
@@ -28134,56 +28121,64 @@ FindClosestTargetInFront_Iterate:
 	rts
 
 FindClosestTargetInFront_FoundNew:
-	moveq	#0,d0
-	move.w	x_pos(a2),d0
+	moveq	#0,d1
+	move.w	x_pos(a2),d1
 
 	btst	#Status_Facing,status(a0)		; is Sonic facing left?
 	beq.s	.facingright				; if not, branch
-	cmp.w	x_pos(a0),d0	; is obj in front of Sonic?
+	cmp.w	x_pos(a0),d1	; is obj in front of Sonic?
 	blt.s	.cont			; if so, continue
 	rts
 
   .facingright:
-	cmp.w	x_pos(a0),d0	; is obj in front of Sonic?
+	cmp.w	x_pos(a0),d1	; is obj in front of Sonic?
 	bge.s	.cont			; if so, continue
 	rts
 
   .cont:
 	; Pythagorean theorem to get distance
-	; a squared...
-	sub.w	x_pos(a0),d0
-	muls.w	d0,d0
+	; a
+	sub.w	x_pos(a0),d1
 
-	; b squared...
-	moveq	#0,d1
-	move.w	y_pos(a2),d1
-	sub.w	y_pos(a0),d1
+	; b
+	moveq	#0,d2
+	move.w	y_pos(a2),d2
+	sub.w	y_pos(a0),d2
 
-	; cap y distance
-	cmpi.w	#$100,d1 ; is y dist greater than cap?
-	bge.s	+	; leave if is
-	cmpi.w	#-$100,d1 ; is y dist greater than cap?
-	ble.s	+	; leave if is
+	jsr		CalcAngle
 
-	; okay back to the b squared part
+	; Angle limits (right)
+	cmpi.b	#224,d0
+	bge.s	+
+	cmpi.b	#32,d0
+	ble.s	+
+
+	; Angle limits (left)
+	cmpi.b	#96,d0
+	blt.s	++
+	cmpi.b	#160,d0
+	bgt.s	++
++
+
+	; a and b squared...
 	muls.w	d1,d1
+	muls.w	d2,d2
 
 	; add em up...
-	add.w	d0,d1
+	add.l	d2,d1
 
-	; and square root em!
-	bsr.w	sqrt_nyh1
+	; and we're gonna skip square rooting em cause we don't need to!
 
-	; is the distance greater than prev?
-	cmp.w	d0,d5
-	blo.s	+	; leave if not
+	; is the distance less than prev?
+	cmp.l	d1,d5
+	bge.s	+	; leave if not
 
-	cmpi.w	#$100,d0 ; is dist greater than cap?
+	cmpi.l	#180*180,d1 ; is dist greater than cap?
 	bge.s	+	; leave if is
 
 	; store current obj and distance
 	move.l	a2,a1
-	move.w	d0,d5
+	move.l	d1,d5
 +
 	rts
 
@@ -34568,6 +34563,8 @@ Obj_Shield:
 	move.b	#0,mapping_frame(a0)
 	move.b	#0,anim(a0)
 	move.b	#0,anim_frame(a0)
+	move.b	#0,anim_frame_duration(a0)
+	move.b	#0,anim_frame_timer(a0)
 	rts
 
 ; loc_1D92C:
@@ -53857,6 +53854,7 @@ Obj_Aquis_ChkIfShoot:
 	bne.s	return_2CEAC
 	_move.l	#Obj_Aquis,id(a1) ; load Obj_Aquis
 	move.b	#6,routine(a1)	; => Obj_Aquis_Bullet
+	bset	#Shield_Reaction_Bounce,shield_reaction(a1)
 	move.w	x_pos(a0),x_pos(a1)	; align with parent object
 	move.w	y_pos(a0),y_pos(a1)
 	move.l	#Obj_Aquis_MapUnc_2CF94,mappings(a1)
@@ -77795,8 +77793,6 @@ loc_3F85C:
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
 
 Bounce_Projectile:
-	move.b	status_secondary(a0),d0
-
 	btst	#Shield_Reaction_Bounce,shield_reaction(a1) ; Should the object be bounced away by a shield?
 	beq.s	++		; If not, branch
 
@@ -77804,9 +77800,9 @@ Bounce_Projectile:
 	tst.b	d0
 	bne.s	+
 
+	move.b	status_secondary(a0),d0
 	andi.b	#Status_FireShield_mask|Status_LtngShield_mask|Status_BublShield_mask,d0 ; got a shield?
 	beq.w	++ ; nope? begone
-
 +
 	move.w	x_pos(a0),d1
 	move.w	y_pos(a0),d2
@@ -78062,9 +78058,8 @@ ShieldTouchResponse:
 		bne.s	+
 
 		move.b	status_secondary(a0),d0
-		andi.b	#$71,d0				; Does the player have any shields?
-		beq.s	locret_1045C
-
+		andi.b	#Status_FireShield_mask|Status_LtngShield_mask|Status_BublShield_mask,d0 ; got a shield?
+		beq.w	locret_1045C ; nope? begone
 +
 		move.w	x_pos(a0),d2			; Get player's x_pos
 		move.w	y_pos(a0),d3			; Get player's y_pos

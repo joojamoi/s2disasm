@@ -1055,8 +1055,8 @@ Super_Sonic_frame_count:	ds.w 1
 Camera_ARZ_BG_X_pos:		ds.l 1
 MiscLevelVariables_End
 
-; HJW: 15 entries to fix various crashes and loading issues
-Plc_Buffer:			ds.b 6*$15	; Pattern load queue (each entry is 6 bytes)
+; HJW: $20 entries to fix various crashes and loading issues
+Plc_Buffer:			ds.b 6*$20	; Pattern load queue (each entry is 6 bytes)
 Plc_Buffer_Only_End:
 				; these seem to store nemesis decompression state so PLC processing can be spread out across frames
 Plc_Buffer_Reg0:		ds.l 1

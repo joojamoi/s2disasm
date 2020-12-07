@@ -379,11 +379,10 @@ Sonic_AirCurl:
 	move.b	#7,x_radius(a0)
 	move.b	#AniIDSonAni_Roll,anim(a0)	; use "jumping" animation
 	bset	#Status_Roll,status(a0)
-	addq.w	#5,y_pos(a0)
 	cmpi.l	#Obj_Knuckles,id(a0)
 	bne.s	+
 	clr.b	double_jump_flag(a0)
-	move.b	#20,glidemode(a0)
+	clr.b	glidemode(a0)
 +
 	rts
 ; ===========================================================================
@@ -431,13 +430,12 @@ Obj_Sonic_MdJump:
 Sonic_HomingAttackMove:
 	move.l	(HomingAttack_Object).l,a1
 	tst.l	id(a1) ; if object is deleted, cancel
-	bne.s	+
-	clr.l	(HomingAttack_Object).l
-	clr.w	x_vel(a0)
-	clr.w	y_vel(a0)
-	clr.b	double_jump_flag(a0)
-	rts	
-+
+	beq.w	Sonic_HomingAttackStop
+	; Failsafe timer
+	addi.b	#1,double_jump_flag(a0)
+	cmpi.b	#60,double_jump_flag(a0)
+	bge.w	Sonic_HomingAttackStop
+
 	moveq	#0,d1
 	move.w	x_pos(a1),d1
 	sub.w	x_pos(a0),d1
@@ -455,7 +453,16 @@ Sonic_HomingAttackMove:
 	move.w	d0,y_vel(a0)
 	move.w	d1,x_vel(a0)
 
-	jmp	(ObjectMove).l
+	jsr	(ObjectMove).l
+	bsr.w	Sonic_LevelBound
+	bra.w	Sonic_DoLevelCollision
+
+Sonic_HomingAttackStop:
+	clr.l	(HomingAttack_Object).l
+	clr.w	x_vel(a0)
+	clr.w	y_vel(a0)
+	clr.b	double_jump_flag(a0)
+	rts	
 
 ; ---------------------------------------------------------------------------
 
@@ -1554,6 +1561,14 @@ Sonic_BubbleShieldDo:
 	rts
 
 Sonic_HomingAttack:
+	; Assist check
+	cmpi.l	#Obj_Tails,(Sidekick+id).w
+	bne.s	+
+	move.b	(Ctrl_1_Held_Logical).w,d0
+	andi.b	#button_up_mask,d0
+	beq.w	+
+	rts
++
 	jsr		FindClosestTargetInFront
 	bclr	#Status_RollJump,status(a0)
 	move.l	a1,(HomingAttack_Object).l
@@ -2369,6 +2384,7 @@ Sonic_ResetOnFloor_Part3:
 	move.b	#0,flip_angle(a0)
 	move.b	#0,flips_remaining(a0)
 	move.w	#0,(Sonic_Look_delay_counter).w
+	clr.l	(HomingAttack_Object).l
 
 loc_1222A:
 
@@ -2620,6 +2636,7 @@ Obj_Sonic_Hurt:
 Obj_Sonic_Hurt_Normal:
 	tst.b	routine_secondary(a0)
 	bmi.w	Sonic_HurtInstantRecover
+	clr.l	(HomingAttack_Object).l
 	jsr	(ObjectMove).l
 	addi.w	#$30,y_vel(a0)
 	btst	#6,status(a0)

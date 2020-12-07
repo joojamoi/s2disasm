@@ -859,8 +859,8 @@ loc_1456C:
 		bhs.s	locret_1459C
 		tst.w	(Debug_placement_mode).w
 		bne.s	locret_1459C
-		tst.b	spindash_flag(a1)
-		bne.s	locret_1459C
+		cmpi.b	#1,spindash_flag(a1)
+		beq.s	locret_1459C
 		bsr.s	sub_1459E
 		clr.b 	double_jump_flag(a1)
 		clr.b 	glidemode(a1)
@@ -1060,7 +1060,6 @@ Tails_AirCurl:
 	move.b	#7,x_radius(a0)
 	move.b	#AniIDSonAni_Roll,anim(a0)	; use "jumping" animation
 	bset	#Status_Roll,status(a0)
-	addq.w	#5,y_pos(a0)
 	clr.b	double_jump_flag(a0)
 +
 	rts
