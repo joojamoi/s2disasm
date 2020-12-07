@@ -9850,7 +9850,7 @@ c := c+1
 
 ;word_7822:
 SpecialStage_ResultsLetters:
-	titleLetters	"ACDGHILMPRSTUW."
+	titleLetters	"ACDGHILMPRSTUWK"
 
  charset ; revert character set
 
@@ -26540,6 +26540,10 @@ Obj_SSResults_Init:
 	move.b	(a2)+,routine(a1)
 	move.b	(a2)+,mapping_frame(a1)
 	move.l	#Obj_SSResults_MapUnc_14ED0,mappings(a1)
+	cmpi.b	#3,(Player_MainChar).w
+	bne.s	+
+	move.l	#Obj_SSResults_MapUnc_Knux,mappings(a1)
++
 	move.w	#prio(0),priority(a1)
 	move.b	#$78,width_pixels(a1)
 	move.b	#0,render_flags(a1)
@@ -26618,8 +26622,8 @@ Obj_SSResults_Emerald0:
 ; ===========================================================================
 ;loc_144DC
 Obj_SSResults_P2Rings:
-	tst.b	(Player_mode).w
-	bne.w	DeleteObject
+	tst.b	(Player_PartnerChar).w
+	beq.w	DeleteObject
 	cmpi.b	#$26,(SpecialStageResults+routine).w	; Do we need space for perfect countdown?
 	beq.w	DeleteObject							; Branch if yes
 	moveq	#$E,d0		; "Miles rings"
@@ -26643,22 +26647,25 @@ Obj_SSResults_P1Rings:
 	bra.w	Obj_SSResults_PerfectBonus
 ; ===========================================================================
 +
-	move.b	(Player_mode).w,d0
-	beq.s	++
+	; Sonic/Knux
+	cmpi.b	#2,(Player_MainChar).w
+	beq.s	Obj_SSResults_P1Rings_Tails
+	tst.b	(Player_PartnerChar).w
+	bne.s	+
 	move.w	#$120,y_pixel(a0)
-	subq.w	#1,d0
-	beq.s	++
++
+	moveq	#$D,d0		; "Sonic rings"
+	lea	(Bonus_Countdown_1).w,a1
+	bra.s	loc_1455A
+
+Obj_SSResults_P1Rings_Tails:
 	moveq	#$E,d0		; "Miles rings"
 	btst	#7,(Graphics_Flags).w
 	beq.s	+
 	addq.w	#1,d0		; "Tails rings"
 +
 	lea	(Bonus_Countdown_2).w,a1
-	bra.s	loc_1455A
 ; ===========================================================================
-+
-	moveq	#$D,d0		; "Sonic rings"
-	lea	(Bonus_Countdown_1).w,a1
 
 loc_1455A:
 	tst.w	(a1)
@@ -26712,8 +26719,6 @@ Obj_SSResults_TallyScore:
 	move.b	#$78,anim_frame_duration(a0)
 	tst.w	(Perfect_rings_flag).w
 	bne.s	+
-	cmpi.b	#2,(Player_mode).w
-	beq.s	++		; rts
 	tst.b	(Got_Emerald).w
 	beq.s	++		; rts
 	cmpi.b	#7,(Emerald_count).w
@@ -26763,8 +26768,6 @@ Obj_SSResults_TallyPerfect:
 	sfx	sfx_Register
 	addq.b	#4,routine(a0)
 	move.b	#$78,anim_frame_duration(a0)
-	cmpi.b	#2,(Player_mode).w
-	beq.s	+		; rts
 	tst.b	(Got_Emerald).w
 	beq.s	+		; rts
 	cmpi.b	#7,(Emerald_count).w
@@ -26792,6 +26795,10 @@ Obj_SSResults_InitAndMoveSuperMsg:
 	move.b	#$14,next_object+routine(a0)			; => BranchTo3_Obj_TitleCard_MoveTowardsTargetPosition
 	subq.w	#8,next_object+y_pixel(a0)
 	move.b	#$1A,next_object+mapping_frame(a0)		; "Now Sonic can"
+	cmpi.b	#2,(Player_MainChar).w
+	bne.s	+
+	move.b	#$1D,next_object+mapping_frame(a0)		; "Now Tails can"
++
 	move.b	#$34,routine(a0)						; => Obj_SSResults_MoveAndDisplay
 	subq.w	#8,y_pixel(a0)
 	move.b	#$1B,mapping_frame(a0)					; "Change into"
@@ -26802,6 +26809,10 @@ Obj_SSResults_InitAndMoveSuperMsg:
 	move.w	#$B4,y_pixel(a1)
 	move.b	#$14,routine(a1)						; => BranchTo3_Obj_TitleCard_MoveTowardsTargetPosition
 	move.b	#$1C,mapping_frame(a1)					; "Super Sonic"
+	cmpi.b	#2,(Player_MainChar).w
+	bne.s	+
+	move.b	#$1E,next_object+mapping_frame(a0)		; "Super Tails"
++
 	move.l	#Obj_SSResults_MapUnc_14ED0,mappings(a1)
 	move.b	#$78,width_pixels(a1)
 	move.b	#0,render_flags(a1)
@@ -27163,6 +27174,9 @@ word_311BF6:	dc.w $B
 
 Obj_SSResults_MapUnc_14ED0:
 	INCLUDE "mappings/sprite/Obj_SSResults.asm"
+
+Obj_SSResults_MapUnc_Knux:
+	INCLUDE "mappings/sprite/Obj_SSResults (Knux).asm"
 ; ===========================================================================
 
 ;loc_15584: ; level title card drawing function called from Vint
@@ -64506,8 +64520,8 @@ Obj_SSMessage_CreateRingReqMessage:
 Obj_SSMessage_PrintCheckpointMessage:
 	move.w	#$80,d3				; x
 	bsr.w	Obj_SSMessage_CreateCheckpointWingedHand
-	tst.b	(Player_PartnerChar).w
-	beq.s	loc_35D6E
+	cmpi.b	#2,(Player_MainChar).w
+	bne.s	loc_35D6E
 	addi.w	#palette_line_1,art_tile(a1)
 	addi.w	#palette_line_1,art_tile(a2)
 
