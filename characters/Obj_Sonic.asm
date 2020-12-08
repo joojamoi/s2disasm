@@ -1456,6 +1456,9 @@ return_1AB36:
 
 
 Sonic_InstaAndShieldMoves:
+	; Disable all moves in 2P
+	tst.w	(Two_player_mode).w
+	bne.w	locret_11A14
 	tst.b	double_jump_flag(a0)		; is Sonic currently performing a double jump?
 	bne.w	locret_11A14			; if yes, branch
 	move.b	(Ctrl_1_Press_logical).w,d0
@@ -1720,6 +1723,9 @@ return_1AC3C:
 ; End of subroutine Sonic_Super
 
 Sonic_CheckPeelout:
+	; Disable all moves in 2P
+	tst.w	(Two_player_mode).w
+	bne.w	return_Peelout1
 	cmpi.b	#1,(Option_PeelOut).w
 	beq.s	+
 	cmpi.b	#3,(Option_PeelOut).w

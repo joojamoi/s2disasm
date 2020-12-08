@@ -2118,9 +2118,13 @@ return_1C70C:
 ; End of subroutine Tails_JumpHeight
 
 Tails_Test_For_Flight:
-		tst.b	double_jump_flag(a0) ; Is tails already flying?
-		beq.w	Tails_Test_For_Flight_2P ; If not, branch
-		rts
+	; Disable all moves in 2P
+	tst.w	(Two_player_mode).w
+	bne.s	+
+	tst.b	double_jump_flag(a0) ; Is tails already flying?
+	beq.w	Tails_Test_For_Flight_2P ; If not, branch
++
+	rts
 
 Tails_Test_For_Flight_2P:
 		move.b	(Ctrl_2_Press_Logical).w,d0

@@ -575,6 +575,7 @@ PLCID_ResultsKnuckles =	id(PLCptr_ResultsKnuckles)
 PLCID_SignpostKnuckles =	id(PLCptr_SignpostKnuckles)
 PLCID_TitleCard =	id(PLCptr_TitleCard)
 PLCID_SpecialStage_Knux =	id(PLCptr_SpecialStage_Knux) ; 3C
+PLCID_Std22P =		id(PLCptr_Std22P)
 
 ; 2P VS results screens
 offset := TwoPlayerResultsPointers
