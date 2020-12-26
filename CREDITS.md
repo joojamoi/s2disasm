@@ -73,6 +73,9 @@
 ### SSRG (mostly the Discord)
 - Misc. discussions suggestions, and support
 
+### Sonic Retro
+- For archiving the mountains of information that made this hack possible
+
 ### SEGA & Sonic Team
 - For making the original game and not C&Ding this community out of existence.
 
