@@ -26,7 +26,7 @@ gameRevision =		2
 ;	| If 0, a REV00 ROM is built
 ;	| If 1, a REV01 ROM is built, which contains some fixes
 ;	| If 2, a (probable) REV02 ROM is built, which contains even more fixes
-padToPowerOfTwo =	0
+padToPowerOfTwo =	1
 ;	| If 1, pads the end of the ROM to the next power of two bytes (for real hardware)
 ;
 allOptimizations =	1
@@ -47,7 +47,7 @@ addsubOptimize =	1
 relativeLea =		1
 ;	| If 1, makes some instructions use pc-relative addressing, instead of absolute long
 ;
-useFullWaterTables =	0
+useFullWaterTables =	1
 ;	| If 1, zone offset tables for water levels cover all level slots instead of only slots 8-$F
 ;	| Set to 1 if you've shifted level IDs around or you want water in levels with a level slot below 8
 
@@ -151,8 +151,8 @@ Vectors:
 Header:
 	dc.b "SEGA GENESIS    " ; Console name
 	dc.b "(C)SEGA 1992.SEP" ; Copyright holder and release date (generally year)
-	dc.b "Sonic The             Hedgehog 2                " ; Domestic name
-	dc.b "Sonic The             Hedgehog 2                " ; International name
+	dc.b "Sonic The Hedgehog 2: Community's Cut           " ; Domestic name
+	dc.b "Sonic The Hedgehog 2: Community's Cut           " ; International name
 	dc.b "GM 00001051-WS" 
 ; word_18E
 Checksum:
@@ -455,23 +455,23 @@ GameMode_EndingSequence:bra.w	JmpTo_EndingSequence	; End sequence mode
 GameMode_OptionsMenu:	bra.w	OptionsMenu		; Options mode
 GameMode_LevelSelect:	bra.w	LevelSelectMenu		; Level select mode
 ; ===========================================================================
-    if skipChecksumCheck=0	; checksum error code
+;    if skipChecksumCheck=0	; checksum error code
 ; loc_3CE:
-ChecksumError:
-	move.l	d1,-(sp)
-	jsr (InitDMAQueue).l
-	bsr.w	VDPSetupGame
-	move.l	(sp)+,d1
-	move.l	#vdpComm($0000,CRAM,WRITE),(VDP_control_port).l ; set VDP to CRAM write
-	moveq	#$3F,d7
+;ChecksumError:
+;	move.l	d1,-(sp)
+;	jsr (InitDMAQueue).l
+;	bsr.w	VDPSetupGame
+;	move.l	(sp)+,d1
+;	move.l	#vdpComm($0000,CRAM,WRITE),(VDP_control_port).l ; set VDP to CRAM write
+;	moveq	#$3F,d7
 ; loc_3E2:
-Checksum_Red:
-	move.w	#$E,(VDP_data_port).l ; fill palette with red
-	dbf	d7,Checksum_Red	; repeat $3F more times
+;Checksum_Red:
+;	move.w	#$E,(VDP_data_port).l ; fill palette with red
+;	dbf	d7,Checksum_Red	; repeat $3F more times
 ; loc_3EE:
-ChecksumFailed_Loop:
-	bra.s	ChecksumFailed_Loop
-    endif
+;ChecksumFailed_Loop:
+;	bra.s	ChecksumFailed_Loop
+ ;   endif
 ; ===========================================================================
 ; loc_3F0:
 LevelSelectMenu2P: ;;
@@ -2708,7 +2708,7 @@ PalCycle_SuperSonic_normal:
 
 	; run frame timer
 	subq.b	#1,(Palette_timer).w
-	bpl.w	++	; rts
+	bpl.w	+++	; rts
 	move.b	#7,(Palette_timer).w
 
 	; increment palette frame and update Sonic's palette
@@ -2727,7 +2727,7 @@ PalCycle_SuperSonic_normal:
 	cmpi.b	#chemical_plant_zone,(Current_Zone).w
 	beq.s	+
 	cmpi.b	#aquatic_ruin_zone,(Current_Zone).w
-	bne.w	-	; rts
+	bne.w	++	; rts
 	lea	(CyclingPal_ARZUWTransformation).l,a0
 +	lea	(Underwater_palette+4).w,a1
 	move.l	(a0,d0.w),(a1)+
@@ -3775,7 +3775,7 @@ DoChecksum:
 
 	cmp.w	Checksum.w,d0			; check if the checksum matches
 	beq.s	ChecksumEndChk			; if yes, we are golden
-	jmp	ChecksumError(pc)		; we have a checksum error
+	jmp	ChecksumError;(pc)		; we have a checksum error
     endif
 
 ChecksumEndChk:
@@ -4022,7 +4022,6 @@ TitleScreen_Loop:
     else
 	move.w	#emerald_hill_zone_act_1,(Current_ZoneAndAct).w
     endif
-	move.b	#1,(Level_select_flag).w ; REMOVE THIS
 	tst.b	(Level_select_flag).w	; has level select cheat been entered?
 	beq.s	+			; if not, branch
 	btst	#button_A,(Ctrl_1_Held).w ; is A held down?
@@ -4041,6 +4040,10 @@ TitleScreen_Loop:
 TitleScreen_CheckIfChose2P:
 	subq.b	#1,d0
 	bne.s	TitleScreen_ChoseOptions
+
+	; REMOVE THIS ONCE 2P IS READY
+	sfx		sfx_Error
+	bra.w	TitleScreen_Loop
 
 	moveq	#1,d1
 	move.w	d1,(Two_player_mode_copy).w
@@ -4358,12 +4361,12 @@ Level_VDPInit:
 	move.w	#$8004,(a6)		; H-INT disabled
 	move.w	#$8720,(a6)		; Background palette/color: 2/0
 	move.w	#$8C81,(a6)		; H res 40 cells, no interlace
-	;tst.b	(Debug_options_flag).w
-	;beq.s	++
+	tst.b	(Debug_options_flag).w
+	beq.s	++
 	;btst	#button_C,(Ctrl_1_Held).w
 	;beq.s	+
 	;move.w	#$8C89,(a6)	; H res 40 cells, no interlace, S/H enabled
-;+
++
 	btst	#button_A,(Ctrl_1_Held).w
 	beq.s	+
 	move.b	#1,(Debug_mode_flag).w
@@ -26352,8 +26355,10 @@ StartActTransition:
 	clr.b	(Last_star_pole_hit_2P).w
 	clr.l	(Timer).w
 	clr.w	(Ring_count).w
+	move.b	#$80,(Update_HUD_timer).w
+	move.b	#$80,(Update_HUD_rings).w
+	move.b	#$80,(Update_HUD_lives).w
 	clr.b	(Extra_life_flags).w
-	move.b	#1,(Update_HUD_timer).w
 
 	; Play music
 	jsr		PlayStageMusic
@@ -38170,7 +38175,7 @@ word_1FC76:
 	dc.w	$0005, $1818, $180C, $0000
 word_1FC98:
 	dc.w	1
-	dc.w	$F406, $1F41, $1BA0, $FFF8
+	dc.w	$F406, $1F41-2, $1BA0-2, $FFF8
 word_1FCA2:
 	dc.w	1
 	dc.w	$F805, $0000, $0000, $FFF8
@@ -38181,7 +38186,7 @@ word_1FCB6:
 	dc.w	0
 word_1FCB8:
 	dc.w	1
-	dc.w	$F406, $1F31, $1B98, $FFF8
+	dc.w	$F406, $1F31-2, $1B98-2, $FFF8
 ; ===========================================================================
 
     if gameRevision<2
@@ -71143,8 +71148,8 @@ Obj_Tornado_Main_SCZ:
 	bsr.w	Obj_Tornado_Move_obbey_player
 	move.b	objoff_2E(a0),d0
 	move.b	status(a0),d1
-	andi.b	#p1_standing,d0	; 'on object' bit
-	andi.b	#p1_standing,d1	; 'on object' bit
+	andi.b	#1,d0	; 'on object' bit
+	andi.b	#1,d1	; 'on object' bit
 	eor.b	d0,d1
 	move.b	d1,objoff_2E(a0)
 	lea	(MainCharacter).w,a1 ; a1=character
@@ -76039,7 +76044,7 @@ loc_3DFBA:
 ;loc_3DFF8
 Obj_Eggrobo_CheckHit:
 	tst.b	collision_property(a0)
-	bra.s	Obj_Eggrobo_Beaten
+	beq.s	Obj_Eggrobo_Beaten
 	tst.b	objoff_2A(a0)
 	bne.s	Obj_Eggrobo_Flashing
 	tst.b	collision_flags(a0)

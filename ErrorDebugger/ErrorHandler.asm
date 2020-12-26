@@ -66,6 +66,9 @@ ErrorExcept:
 ErrorTrap:
 	__ErrorMessage "ERROR TRAP", _eh_default
 
+ChecksumError:
+	__ErrorMessage "INVALID CHECKSUM", _eh_default
+
 ; ---------------------------------------------------------------
 ; Error handler external functions (compiled only when used)
 ; ---------------------------------------------------------------

@@ -830,6 +830,10 @@ loc_315DE2:					  ; ...
 
 
 Knuckles_JumpHeight:				  ; ...
+	; HJW: If in cutscene, skip Knux jump height (for WFZ cutscene)
+	tst.b	(Control_Locked).w
+	bne.w	Sonic_JumpHeight
+
     tst.b	jumping(a0)
     beq.s	Knuckles_UpwardsVelocityCap
     move.w	#-$400,d1

@@ -1235,7 +1235,7 @@ Obj_Tails_MdJump:
 ; End of subroutine Obj_Tails_MdJump
 
 Tails_CheckGoSuper:
-	move.b	(Ctrl_6btn_1_Press_Logical).w,d0
+	move.b	(Ctrl_6btn_2_Press_Logical).w,d0
 	andi.b	#button_Y_mask,d0 ; is Y pressed?
 	beq.w	return_1AC3C_Tails	; if not, return
 	tst.b	(Super_Sonic_flag).w
@@ -3271,7 +3271,7 @@ TailsAni_SwimFast:		dc.b   2,$9A,$9B,$9C,$9D,$9E,$FF
 	even
 TailsAni_SwimTired:		dc.b   4,$97,$98,$99,$FF
 	even
-TailsAni_SwimCarry:		dc.b   4,$A0,$A1,$FF
+TailsAni_SwimCarry:		dc.b   4,$9F,$A0,$FF
 	even
 TailsAni_Transform:		dc.b    2, $A1, $A1, $A2, $A3, $A2, $A3, $A2, $A3, $A2, $A3, $A2, $A3, $FD,   0
 	even

@@ -239,7 +239,7 @@ OptionsMenu_Main:
 	menuitemdata MenuItemSub,			Txt_GameplayOptions,    OptionsMenu_Gameplay
 	menuitemdata MenuItemSub,			Txt_StyleOptions,       OptionsMenu_Style
 	menuitemdata MenuItemSub,			Txt_SystemOptions,		OptionsMenu_Emulator
-	menuitemdata MenuItemSub,			Txt_Credits,			OptionsMenu_Credits
+	menuitemdata MenuItemCredits,		Txt_Credits,			0
 
 OptionsMenu_Val_Player: 	        menuitemdatavalue	4,          Player_option,	        TxtList_CharacterUE
 OptionsMenu_Val_2P:			        menuitemdatavalue	1,          Option_2PItems,         TxtList_2PItems
@@ -308,7 +308,7 @@ OptionsMenu_Level:
 	menuitemdata MenuItemValue, Txt_ActTransitions,		OptionsMenu_Val_ActTransitions
 
 OptionsMenu_Val_Shields:   		menuitemdatavalue	6,      Option_Shields,			TxtList_Shields
-OptionsMenu_Val_ActTransitions: menuitemdatavalue	2,      Option_ActTransitions,	TxtList_ActTransitions
+OptionsMenu_Val_ActTransitions: menuitemdatavalue	1,      Option_ActTransitions,	TxtList_ActTransitions
 
 ; =============================================================================
 

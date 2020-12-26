@@ -225,6 +225,7 @@ OptionsScreen_Input_MenuItemValuePlayer:
 	rts
 +
 	move.w	#0,(Current_ZoneAndAct).w	; emerald_hill_zone_act_1
+	move.w	#0,(Apparent_ZoneAndAct).w
 	move.b	#GameModeID_Level,(Game_Mode).w ; => Level (Zone play mode)
 	rts
 
@@ -233,6 +234,10 @@ OptionsScreen_Input_MenuItemValue2P:
 	or.b	(Ctrl_2_Press).w,d0
 	btst	#button_start,d0
 	beq.s	OptionsScreen_Input_MenuItemValue
+	; REMOVE THIS ONCE 2P IS READY
+	sfx		sfx_Error
+	rts
+	
 	; Start a 2P VS game
 	move.w	#1,(Two_player_mode).w
 	move.w	#1,(Two_player_mode_copy).w
@@ -370,10 +375,12 @@ MenuScreen_Options:
 	bsr.w	WaitForVint
 	music	mus_Options
 
+	move.w	#4,(Vscroll_Factor_FG).w
+
 	move.w	(VDP_Reg1_val).w,d0
 	ori.b	#$40,d0
 	move.w	d0,(VDP_control_port).l
-	bsr.w	Pal_FadeFromBlack
+	jsr		Pal_FadeFromBlack
 ; loc_9060:
 OptionScreen_Main:
 	move.b	#VintID_Menu,(Vint_routine).w

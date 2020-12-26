@@ -10,6 +10,20 @@ SRAM_Write = $A130F1
 Size_of_Snd_driver_guess =	$80E	; approximate post-compressed size of the Z80 sound driver
 Debug_Lagometer =	0		; set to 1 to enable on-screen lagometer. Seems to have an odd habit of breaking Special Stages....
 
+	phase 0
+save_player_mode		ds.b	1
+save_player_reserved	ds.b	1
+save_current_zone		ds.b	1	; FF = Game finished, open level select
+save_current_act		ds.b	1
+save_lives				ds.b	1
+save_score				ds.l	1
+save_rings				ds.w	1	; unused for now
+save_time				ds.b	4	; unused for now
+save_emeralds			ds.b	1	; bitfield
+save_emeralds_other		ds.b	1	; bitfield (owo)
+save_options			ds.b	64
+save_size = *
+
 ; ---------------------------------------------------------------------------
 ; Object Status Table offsets (for everything between Object_RAM and Primary_Collision)
 ; ---------------------------------------------------------------------------
@@ -1231,8 +1245,8 @@ Current_ZoneAndAct:				; 2 bytes
 Current_Zone:			ds.b 1		; 1 byte
 Current_Act:			ds.b 1		; 1 byte
 Life_count:			ds.b 1
-				ds.b 1
 
+Returning_From_SS:		ds.b 1
 Current_Special_StageAndAct:	; 2 bytes
 Current_Special_Stage:		ds.b 1
 Current_Special_Act:		ds.b 1
@@ -1240,8 +1254,6 @@ Continue_count:			ds.b 1
 Super_Sonic_flag:		ds.b 1
 Time_Over_flag:			ds.b 1
 Extra_life_flags:		ds.b 1
-Returning_From_SS:		ds.b 1
-						ds.b 1 ; align
 
 ; If set, the respective HUD element will be updated.
 Update_HUD_lives:		ds.b 1
@@ -1430,35 +1442,38 @@ Checksum_fourcc:		ds.l 1		; (4 bytes)
 Water_Ripple_Counter:	ds.w 1
 
 Options_RAM_Start:
-Option_2PItems:		ds.b 1
+
+Player_option:			ds.b 1		; 0 = Sonic and Tails, 1 = Sonic, 2 = Tails
 Option_PhysicsStyle:			ds.b 1 ; 0 = S2, 1 = S1, 2 = S3K, 3 = SM
 
-Option_SonicAbility:	ds.b 1
-Option_AirCurling:		ds.b 1 ; 0 = off
-
-Option_ShieldAbilityStyle:		ds.b 1
-Option_WaterRipple:		ds.b 1	; 0 = on
-
-Option_WaterSoundFilter:		ds.b 1
-Option_TailsFlight:				ds.b 1 ; 0 = on + assist, 1 = on, 2 = off
-
-Option_SpeedTrail:			ds.b 1
-Option_PeelOut:			ds.b 1 ; 0 = off, 1 = ability + anim, 3 = anim, 2 = ability
-
 Option_Shields:			ds.b 1 ; see OptionsScreen/Data.asm, i probably got way too granular with these choices lmao
-Option_CameraStyle:		ds.b 1; 0 = normal, 1 = extended, 2 = full scd
-
-Option_SuperMusic:		ds.b 1 ; 0 = on
 Option_InvincShields:	ds.b 1
 
+Option_ShieldAbilityStyle:		ds.b 1
 Option_ActTransitions:	ds.b 1
-Player_option:			ds.b 1		; 0 = Sonic and Tails, 1 = Sonic, 2 = Tails
+
+Option_SonicAbility:	ds.b 1
+Option_PeelOut:			ds.b 1 ; 0 = off, 1 = ability + anim, 3 = anim, 2 = ability
+
+Option_TailsFlight:				ds.b 1 ; 0 = on + assist, 1 = on, 2 = off
+Option_AirCurling:		ds.b 1 ; 0 = off
+
+Option_Emulator_MirrorMode:	ds.b 1	; 0 = off, 1 = on
+Option_CameraStyle:		ds.b 1; 0 = normal, 1 = extended, 2 = full scd
+
+Options_PerSave_End:
+
+Option_WaterRipple:		ds.b 1	; 0 = on
+Option_WaterSoundFilter:		ds.b 1
+
+Option_SpeedTrail:			ds.b 1
+Option_SuperMusic:		ds.b 1 ; 0 = on
 
 Option_Music:			ds.b 1		; 0 = on, 1 = off
 Option_SFX:				ds.b 1		; 0 = on, 1 = off
 
+Option_2PItems:		ds.b 1
 Option_Emulator_Scaling:	ds.b 1	; 0 = normal, 1 = int scaling
-Option_Emulator_MirrorMode:	ds.b 1	; 0 = off, 1 = on
 
 Options_RAM_End:
 

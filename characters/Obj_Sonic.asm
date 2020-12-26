@@ -1371,6 +1371,10 @@ Sonic_Jump:
 	beq.s	+
 	move.w	#$380,d2	; set lower jump speed if under
 +
+	; HJW: If in cutscene, skip Knux jump height (for WFZ cutscene)
+	tst.b	(Control_Locked).w
+	bne.w	+
+
 	; HJW: Set lower jump speed for Knux
 	cmpi.l	#Obj_Knuckles,id(a0)
 	bne.s	+
@@ -1641,10 +1645,9 @@ Sonic_CheckGoSuper:
 	beq.w	return_1ABA4	; if not, return
 	tst.b	(Super_Sonic_flag).w
 	bne.w	Sonic_RevertToNormal
-	move.w	#50,(Ring_count).w		; does Sonic have at least 50 rings?
 	
-	;cmpi.b	#7,(Emerald_count).w	; does Sonic have exactly 7 emeralds?
-	;bne.s	return_1ABA4			; if not, branch
+	cmpi.b	#7,(Emerald_count).w	; does Sonic have exactly 7 emeralds?
+	bne.s	return_1ABA4			; if not, branch
 	tst.b	(Update_HUD_timer).w	; has Sonic reached the end of the act?
 	beq.s	return_1ABA4			; if yes, branch
 	cmpi.w	#50,(Ring_count).w		; does Sonic have at least 50 rings?
