@@ -1496,6 +1496,14 @@ Sonic_FireShieldDo:
 	beq.s	+			; if not, branch
 	move.b	#1,(Shield+anim).w
 +
+	; Assist check
+	cmpi.l	#Obj_Tails,(Sidekick+id).w
+	bne.s	+
+	move.b	(Ctrl_1_Held_Logical).w,d0
+	andi.b	#button_up_mask,d0
+	beq.w	+
+	rts
++
 	bclr	#Status_RollJump,status(a0)
 	move.b	#1,double_jump_flag(a0)
 	move.w	#$800,d0

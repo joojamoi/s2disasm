@@ -15829,7 +15829,7 @@ SwScrl_CNZ:
 	neg.w	d1
 	subq.w	#2,a2
 	move.w	#bytesToLcnt($380),d2
-	move.w	(Camera_BG_X_pos).w,d0
+	move.w	(Camera_X_pos).w,d0
 	neg.w	d0
 	swap	d0
 	move.w	(a2)+,d0
@@ -32847,11 +32847,20 @@ Load_EndOfAct:
 	beq.s	+
 	rts
 +
-	lea	(MainCharacter).w,a1 ; a1=character
-	bclr	#status_sec_isInvincible,status_secondary(a1)
-	bclr	#status_sec_hasSpeedShoes,status_secondary(a1)
+	move.l	a0,-(sp)		; Backup a0
+	lea		(MainCharacter).w,a0 ; a0=character
+	bclr	#status_sec_isInvincible,status_secondary(a0)
+	bclr	#status_sec_hasSpeedShoes,status_secondary(a0)
+	clr.w	speedshoes_time(a0)
+
+	lea		(Sonic_top_speed).w,a2	; Load Sonic_top_speed into a2
+	jsr		ApplySpeedSettings	; Fetch Speed settings
+	move.l	(sp)+,a0		; Restore a0
+
+
 	command	mus_ShoesOff		; Slow down tempo
 	clr.b	(Update_HUD_timer).w
+
 	bsr.w	SingleObjLoad
 	bne.s	+
 	move.l	#Obj_Results,id(a1) ; load Obj_Results (end of level results screen)
