@@ -59158,7 +59158,7 @@ Obj_MCZBoss_LoadStoneSpike:
 	jsrto	(SingleObjLoad).l, JmpTo15_SingleObjLoad
 	bne.s	return_31438
 	move.l	#Obj_MCZBoss,id(a1)	; load Obj_MCZBoss
-	bset	#Shield_Reaction_Bounce,shield_reaction(a1)
+	;bset	#Shield_Reaction_Bounce,shield_reaction(a1)	; crashes on collision, needs fix
 	move.b	#4,boss_subtype(a1)
 	move.w	d1,x_pos(a1)
 	move.w	#$5F0,y_pos(a1)
