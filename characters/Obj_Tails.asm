@@ -1055,6 +1055,9 @@ Tails_AirCurl:
 	btst	#button_a,(Ctrl_2_Press_Logical).w	; is a being pressed?
 	beq.s	+			; if not, branch
 
+	tst.b	spindash_flag(a0)
+	bne.s	+
+
 	move.b	#1,jumping(a0)
 	move.b	#$E,y_radius(a0)
 	move.b	#7,x_radius(a0)
@@ -1668,8 +1671,7 @@ return_1C3A8:
 Tails_RollSpeed:
 	move.w	(Tails_top_speed).w,d6
 	asl.w	#1,d6
-	move.w	(Tails_acceleration).w,d5
-	asr.w	#1,d5	; natural roll deceleration = 1/2 normal acceleration
+	moveq	#6,d5	; natural roll deceleration = 1/2 normal acceleration
 	move.w    #$20,d4
     if status_sec_isSliding = 7
 	tst.b	status_secondary(a0)
@@ -2078,7 +2080,10 @@ return_1C6C2:
 ; ---------------------------------------------------------------------------
 ; loc_1C6C4:
 Tails_RollJump:
-	bset	#4,status(a0) ; set the rolling+jumping flag
+	cmpi.b	#3,(Option_PhysicsStyle).w
+	bge.s	+
+	bset	#Status_RollJump,status(a0)	; set the rolling+jumping flag
++
 	rts
 ; End of function Tails_Jump
 

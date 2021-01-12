@@ -374,6 +374,9 @@ Sonic_AirCurl:
 	btst	#button_a,(Ctrl_1_Press_Logical).w	; is a being pressed?
 	beq.s	+			; if not, branch
 
+	tst.b	spindash_flag(a0)
+	bne.s	+
+
 	move.b	#1,jumping(a0)
 	move.b	#$E,y_radius(a0)
 	move.b	#7,x_radius(a0)
@@ -960,8 +963,7 @@ return_1A7C4:
 Sonic_RollSpeed:
 	move.w	(Sonic_top_speed).w,d6
 	asl.w	#1,d6
-	move.w	(Sonic_acceleration).w,d5
-	asr.w	#1,d5	; natural roll deceleration = 1/2 normal acceleration
+	moveq	#6,d5	; natural roll deceleration = 1/2 normal acceleration
 	move.w	#$20,d4	; controlled roll deceleration... interestingly,
 			; this should be Sonic_deceleration/4 according to Tails_RollSpeed,
 			; which means Sonic is much better than Tails at slowing down his rolling when he's underwater
@@ -1049,7 +1051,7 @@ Sonic_SetRollSpeeds:
 	move.w	#$1000,d0
 	cmpi.b	#3,(Option_PhysicsStyle).w
 	blt.s	+
-	move.w	#$1800,d0
+	move.w	#$1400,d0
 +
 	cmp.w	d0,d1
 	ble.s	+
@@ -1875,6 +1877,8 @@ return_1AC8C:
 
 ; loc_1AC8E:
 Sonic_UpdateSpindash:
+	move.b	#AniIDSonAni_Spindash,anim(a0)
+
 	move.b	(Ctrl_1_Held_Logical).w,d0
 	btst	#button_down,d0
 	bne.w	Sonic_ChargingSpindash

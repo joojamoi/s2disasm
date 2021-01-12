@@ -14,6 +14,9 @@ PanCamera:
 
     .abs_inertia:
 
+        ; Fix for CPZ softlock
+        cmpi.b	#$81,obj_control(a0)
+        beq.s   .reset_pan
 ; These lines aren't part of the original routine; I added them myself.
 ; If you've ported the Spin Dash, uncomment the following lines of code
 ; to allow the camera to pan ahead while charging the Spin Dash:

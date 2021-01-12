@@ -16641,10 +16641,10 @@ ScrollHoriz:
 ; loc_D732:
 .checkIfShouldScroll:
 	sub.w	(a1),d0
-	cmpi.b	#1,(Option_CameraStyle).w
+	cmpi.b	#1,(Option_CameraStyle).w	; extended
 	blt.s 	.normalcam
 	sub.w   (Camera_Pan).w,d0    ; Horizontal camera pan value
-	cmpi.b	#2,(Option_CameraStyle).w
+	cmpi.b	#2,(Option_CameraStyle).w	; sonic cd
 	bne.s 	.normalcam
 	subi.w	#(320/2),d0		; is the player less than 144 pixels from the screen edge?
 	blt.s	.scrollLeft	; if he is, scroll left
@@ -24407,7 +24407,9 @@ bubbleshield_monitor:
 
 super_monitor:
 	addi.w	#50,(Ring_count).w
-	jmp Sonic_Transform
+	cmpi.l	#Obj_Tails,(MainCharacter).w
+	jeq		Tails_Transform
+	jmp		Sonic_Transform
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -34949,6 +34951,8 @@ Obj_Splash_MdSpindashDust:
 	bhs.s	Obj_Splash_ResetDisplayMode
 	tst.b	spindash_flag(a2)
 	beq.s	Obj_Splash_ResetDisplayMode
+	btst	#Status_InAir,status(a2)
+	bne.s	Obj_Splash_ResetDisplayMode
 	move.w	x_pos(a2),x_pos(a0)
 	move.w	y_pos(a2),y_pos(a0)
 	move.b	status(a2),status(a0)
@@ -35089,8 +35093,8 @@ Obj_SplashAni_Dash:	dc.b   1, $A, $B, $C, $D, $E, $F,$10,$FF
 	rev02even
 Obj_SplashAni_Skid:	dc.b   3,$11,$12,$13,$14,$FC
 	even
-Obj_SplashAni_Dropdash:	dc.b   2, $16, $17, $18, $19,$19
-	dc.b $1A,$1A, $1B,$1B,$1B, $1C,$1C,$1C,$1C, $1D,$1D,$1D,$1D, $FD,0
+Obj_SplashAni_Dropdash:	dc.b   2, $16, $17, $18, $19
+	dc.b $1A,$1A, $1B,$1B, $1C,$1C,$1C, $1D,$1D,$1D, $FD,0
 	even
 ; -------------------------------------------------------------------------------
 ; sprite mappings
@@ -81161,6 +81165,12 @@ Debug_ExitDebugMode:
 	; Exit debug mode
 	moveq	#0,d0
 	move.w	d0,(Debug_placement_mode).w
+
+	move.b	#$81,(Update_HUD_score).w
+	move.b	#$81,(Update_HUD_rings).w
+	move.b	#$81,(Update_HUD_timer).w
+	move.b	#$81,(Update_HUD_timer_2P).w
+
 	lea	(MainCharacter).w,a1 ; a1=character
 	move.l	#Mapunc_Sonic,mappings(a1)
 	cmpi.l	#Obj_Knuckles,id(a1)
