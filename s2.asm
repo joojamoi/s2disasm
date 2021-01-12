@@ -71769,21 +71769,22 @@ loc_3AE66:
 	jsrto	(ObjectMove).l, JmpTo26_ObjectMove
 
 loc_3AE72:
-	bsr.w	Obj_GetOrientationToPlayer
-	moveq	#$10,d3
-	add.w	d3,d2
-	cmpi.w	#$20,d2
-	blo.s	return_3AE9E
-	mvabs.w	inertia(a1),d2
-	cmpi.w	#$900,d2
-	bhs.s	return_3AE9E
-	tst.w	d0
-	beq.s	loc_3AE94
-	neg.w	d3
+	; HJW: SCZ plane "fix"
+	;bsr.w	Obj_GetOrientationToPlayer
+	;moveq	#$10,d3
+	;add.w	d3,d2
+	;cmpi.w	#$20,d2
+	;blo.s	return_3AE9E
+	;mvabs.w	inertia(a1),d2
+	;cmpi.w	#$900,d2
+	;bhs.s	return_3AE9E
+	;tst.w	d0
+	;beq.s	loc_3AE94
+	;neg.w	d3
 
 loc_3AE94:
 	move.w	x_pos(a1),d1
-	add.w	d3,d1
+	;add.w	d3,d1
 	move.w	d1,x_pos(a0)
 
 return_3AE9E:
