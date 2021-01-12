@@ -2253,7 +2253,10 @@ Tails_UpdateSpindash:
 	andi.w	#$1F00,d0
 	neg.w	d0
 	addi.w	#$2000,d0
+	cmpi.b	#2,(Option_CameraStyle).w	; sonic cd camera
+	beq.s	+
 	move.w	d0,(Horiz_scroll_delay_val_P2).w
++
 	btst	#0,status(a0)
 	beq.s	+
 	neg.w	inertia(a0)

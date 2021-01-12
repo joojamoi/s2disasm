@@ -77684,6 +77684,14 @@ Touch_Monitor:
     beq.s    loc_3F768
 	tst.w	y_vel(a0)	; is Sonic moving upwards?
 	bpl.s	loc_3F768	; if not, branch
+	; Homing attack fix
+	cmpi.l	#Obj_Sonic,id(a0)
+	bne.s	+
+	cmpi.b	#4,(Option_SonicAbility).w
+	bne.s	+
+	tst.l	(HomingAttack_Object).l
+	bne.w	loc_3F768
++
 	move.w	y_pos(a0),d0
 	subi.w	#$10,d0
 	cmp.w	y_pos(a1),d0

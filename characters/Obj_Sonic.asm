@@ -1490,7 +1490,7 @@ Sonic_FireShield:
 	bne.w	Sonic_DropDashStart				; if yes, branch
 +
 	btst	#Status_FireShield,status_secondary(a0)	; does Sonic have a Fire Shield?
-	beq.s	Sonic_LightningShield			; if not, branch
+	beq.w	Sonic_LightningShield			; if not, branch
 
 Sonic_FireShieldDo:
 	; Check again because shield control might be active
@@ -1509,6 +1509,17 @@ Sonic_FireShieldDo:
 	bclr	#Status_RollJump,status(a0)
 	move.b	#1,double_jump_flag(a0)
 	move.w	#$800,d0
+
+	; HJW: "Joey" shield tweaks
+	cmpi.b	#2,(Option_ShieldAbilityStyle).l
+	bne.s	+
+	mvabs.w	x_vel(a0),d1
+	cmpi.w	#$500,d1
+	blt.s	+
+	move.w	d1,d0
+	lsr.w	#2,d1
+	add.w	d1,d0
++
 	btst	#Status_Facing,status(a0)		; is Sonic facing left?
 	beq.s	loc_11958				; if not, branch
 	neg.w	d0					; reverse speed value, moving Sonic left
@@ -1517,8 +1528,11 @@ loc_11958:
 	move.w	d0,x_vel(a0)		; apply velocity...
 	move.w	d0,ground_vel(a0)	; ...both ground and air
 	move.w	#0,y_vel(a0)		; kill y-velocity
+	cmpi.b	#2,(Option_CameraStyle).w	; sonic cd camera
+	beq.s	+
 	move.w	#$2000,(Horiz_scroll_delay_val).w
 	bsr.w	Reset_Player_Position_Array
++
 	sfx		sfx_FireAttack			; play Fire Shield attack sound
 	rts
 ; ---------------------------------------------------------------------------
@@ -1903,7 +1917,10 @@ Sonic_UpdateSpindash:
 	andi.w	#$1F00,d0
 	neg.w	d0
 	addi.w	#$2000,d0
+	cmpi.b	#2,(Option_CameraStyle).w	; sonic cd camera
+	beq.s	+
 	move.w	d0,(Horiz_scroll_delay_val).w
++
 	btst	#0,status(a0)
 	beq.s	+
 	neg.w	inertia(a0)
