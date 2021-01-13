@@ -32633,6 +32633,10 @@ Obj_Signpost_Index:	offsetTable
 ; ===========================================================================
 ; loc_191DC: Obj_0D_sub_0:
 Obj_Signpost_Init:
+	move.b	(Apparent_Act).w,d0
+	cmp.b	(Current_Act).w,d0
+	bne.w	loc_19208_ret
+
 	tst.w	(Two_player_mode).w
 	beq.s	loc_19208
 	move.l	#Obj_Signpost_MapUnc_19656,mappings(a0)
@@ -32652,6 +32656,8 @@ loc_19208:
 	tst.b	(Current_Act).w
 	beq.s	loc_1921E
 	move.w	#0,x_pos(a0)
+
+loc_19208_ret:
 	rts
 ; ---------------------------------------------------------------------------
 loc_1921E:
