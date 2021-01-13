@@ -723,6 +723,8 @@ loc_748:
 Do_Updates:
 	jsrto	(LoadTilesAsYouMove).l, JmpTo_LoadTilesAsYouMove
 	jsr	(HudUpdate).l
+	; HJW: 2x the DPLC speeed :^^^)
+	bsr.w	ProcessDPLC2
 	bsr.w	ProcessDPLC2
 	tst.w	(Demo_Time_left).w	; is there time left on the demo?
 	beq.w	+		; if not, branch
@@ -4741,9 +4743,17 @@ ActTransition:
 	addi.w	#128,d0
 	move.w	d0,(MainCharacter+x_pos).w
 	sub.w	d0,d1
+	; Prevent camera underflow
+	cmp.w	(Camera_X_pos).w,d1
+	blt.s	+
+	subi.w	#$A0,d0
+	move.w	d0,(Camera_X_pos).w
+	move.w	d0,(Camera_X_pos_last).w
+	bra.s	++
++
 	sub.w	d1,(Camera_X_pos).w
 	sub.w	d1,(Camera_X_pos_last).w
-
++
 	move.w	(MainCharacter+x_pos).w,(Sidekick+x_pos).w
 	sub.w	d2,(Sidekick+x_pos).w
 
@@ -84635,7 +84645,7 @@ DualPCM_sz:
 	; these are used for emulator hacks
 	shared mQueue,mFlags,Current_Zone,Current_Act,dPlaySnd,Game_Mode
 	shared SSTrack_anim,SS_Cur_Speed_Factor,Option_Emulator_Scaling
-	shared Option_Emulator_MirrorMode
+	shared Option_Emulator_MirrorMode,Apparent_Zone,Apparent_Act
 
 ; --------------------------------------------------------------------
 	include	"ErrorDebugger/ErrorHandler.asm"
