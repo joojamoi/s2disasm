@@ -9715,7 +9715,7 @@ SSStartNewAct:
 	add.w	d1,d0
 	move.b	SpecialStage_RingReq_Team(pc,d0.w),d1
 	tst.b	(Player_PartnerChar).w
-	beq.s	+
+	bne.s	+
 	move.b	SpecialStage_RingReq_Alone(pc,d0.w),d1
 +
 	move.w	d1,(SS_Ring_Requirement).w
